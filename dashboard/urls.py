@@ -6,4 +6,5 @@ urlpatterns = [
     path("meetings/", views.parent_meetings, name="parent_meetings"),
     path("meetings/request/", views.request_meeting, name="request_meeting"), 
     path("link-child/", views.link_child, name="link_child"),
+    path("meetings/update/<int:meeting_id>/<str:status>/", views.update_meeting_status, name="update_meeting_status"),
 ]

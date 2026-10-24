@@ -24,6 +24,54 @@
   {% endfor %}
 </div>
 
+<!-- ========== MEETING REQUESTS ========== -->
+<h4 style="margin: 40px 0 20px; font-size: 22px;">📅 Parent Meeting Requests</h4>
+
+<div class="grid-2">
+  {% for meeting in meetings %}
+    <div class="card" style="padding: 24px; border-left: 4px solid {% if meeting.status == 'pending' %}#F59E0B{% elif meeting.status == 'approved' %}#16A34A{% else %}#DC2626{% endif %};">
+      
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div>
+          <h5 style="font-size: 18px; margin-bottom: 4px;">{{ meeting.parent.get_full_name|default:meeting.parent.username }}</h5>
+          <p style="color: var(--g500); font-size: 13px;">Requested for: <strong>{{ meeting.subject }}</strong></p>
+        </div>
+        <span class="badge {% if meeting.status == 'pending' %}badge-amber{% elif meeting.status == 'approved' %}badge-green{% else %}badge-red{% endif %}">
+          {{ meeting.get_status_display }}
+        </span>
+      </div>
+      
+      <div style="background: var(--bg); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 24px;">
+        <div style="font-size: 14px; color: var(--g700);">
+          <i class="bi bi-calendar-event" style="color: var(--p700);"></i> {{ meeting.date }}
+        </div>
+        <div style="font-size: 14px; color: var(--g700);">
+          <i class="bi bi-clock" style="color: var(--p700);"></i> {{ meeting.time }}
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px;">
+        {% if meeting.status == 'pending' %}
+          <a href="{% url 'update_meeting_status' meeting.id 'approved' %}" class="btn btn-success btn-sm" style="flex: 1;">✅ Accept</a>
+          <a href="{% url 'update_meeting_status' meeting.id 'rejected' %}" class="btn btn-danger btn-sm" style="flex: 1;">❌ Reject</a>
+        {% elif meeting.status == 'approved' %}
+          <a href="https://meet.jit.si/EduPath-PTM-{{ meeting.id }}" target="_blank" class="btn btn-primary btn-block">
+            <i class="bi bi-camera-video"></i> Join Video Call
+          </a>
+        {% else %}
+          <p style="color: var(--red); font-size: 13px; font-weight: 600; width: 100%; text-align: center;">Meeting Declined</p>
+        {% endif %}
+      </div>
+
+    </div>
+  {% empty %}
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+      <p style="color: var(--g500);">No meeting requests yet.</p>
+    </div>
+  {% endfor %}
+</div>
+
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
   <h4>📝 My Quizzes</h4>
   <a href="{% url 'teacher_quiz_list' %}" style="color:var(--p700);font-size:14px;text-decoration:none;font-weight:600;">View All →</a>

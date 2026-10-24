@@ -11,6 +11,10 @@ from django.contrib import messages
 from accounts.models import User
 from .forms import LinkChildForm
 
+from django.shortcuts import get_object_or_404
+from liveclasses.models import ParentMeeting
+
+
 def home(request):
     featured = Course.objects.all()[:6]
     return render(request, "home.html", {"featured": featured})
@@ -36,8 +40,11 @@ def student_dashboard(request):
     })
 
 def teacher_dashboard(request):
+    from liveclasses.models import ParentMeeting
     courses = Course.objects.filter(teacher=request.user)
-    return render(request, "dashboard/teacher.html", {"courses": courses})
+    # Fetch meetings requested for this specific teacher
+    meetings = ParentMeeting.objects.filter(teacher=request.user).order_by('-created_at')
+    return render(request, "dashboard/teacher.html", {"courses": courses, "meetings": meetings})
 
 def parent_dashboard(request):
     from accounts.models import StudentProfile
@@ -152,3 +159,17 @@ def link_child(request):
         form = LinkChildForm()
 
     return render(request, "dashboard/link_child.html", {"form": form})
+
+@login_required
+def update_meeting_status(request, meeting_id, status):
+    if request.user.role != 'teacher':
+        return redirect('dashboard')
+        
+    meeting = get_object_or_404(ParentMeeting, id=meeting_id, teacher=request.user)
+    
+    if status in ['approved', 'rejected']:
+        meeting.status = status
+        meeting.save()
+        messages.success(request, f"Meeting successfully {status}!")
+        
+    return redirect('dashboard')
