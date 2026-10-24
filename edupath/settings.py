@@ -68,13 +68,21 @@ TEMPLATES = [{
 WSGI_APPLICATION = "edupath.wsgi.application"
 
 # ---------------- DATABASE ----------------
-# This automatically switches between SQLite (local) and PostgreSQL (Render)
-DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-    )
-}
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # If DATABASE_URL is set (like on Render), parse it
+    DATABASES = {
+        "default": dj_database_url.parse("postgresql://edupath_db_fkbl_user:nEdiKaVz1NIS0rDnFyZOcOOljONAgP2A@dpg-dbe3mfjncjis73e25i70-a/edupath_db_fkbl")
+    }
+else:
+    # Fallback to SQLite for local development
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
