@@ -1,56 +1,130 @@
 {% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
 {% block content %}
-<h2>👋 Hi, {{ user.username }}</h2>
-<p style="color:var(--g500);margin-bottom:24px;">Here's your learning snapshot.</p>
 
-<div class="grid-3" style="margin-bottom:32px;">
-  <div class="stat-card"><small>Enrolled Courses</small><h2>{{ enrollments|length }}</h2></div>
-  <div class="stat-card"><small>Attendance</small><h2>{{ attendance_percent }}%</h2></div>
-  <div class="stat-card"><small>Recent Quizzes</small><h2>{{ attempts|length }}</h2></div>
+<div style="margin-bottom: 32px;">
+  <h2 style="margin-bottom: 8px; font-size: 28px;">👋 Hi, {{ user.get_full_name|default:user.username }}</h2>
+  <p style="color: var(--g500); font-size: 16px;">Here is your learning snapshot for today.</p>
 </div>
 
-<h3 style="margin-bottom:16px;">📚 My Courses</h3>
-<div class="grid-3" style="margin-bottom:40px;">
+<!-- ========== STAT CARDS ========== -->
+<div class="grid-3" style="margin-bottom: 40px;">
+  <div class="stat-card">
+    <small>Enrolled Courses</small>
+    <h2>{{ enrollments|length }}</h2>
+  </div>
+  <div class="stat-card" style="border-left-color: #2563EB;">
+    <small>Attendance</small>
+    <h2>{{ attendance_percent }}%</h2>
+  </div>
+  <div class="stat-card" style="border-left-color: #F59E0B;">
+    <small>Recent Quizzes</small>
+    <h2>{{ attempts|length }}</h2>
+  </div>
+</div>
+
+<!-- ========== QUIZ CHART ========== -->
+<div class="card" style="padding: 24px; margin-bottom: 40px;">
+  <h4 style="font-size: 18px; margin-bottom: 16px;">📈 Your Quiz Scores</h4>
+  <div style="position: relative; height: 250px; width: 100%;">
+    <canvas id="myQuizChart"></canvas>
+  </div>
+</div>
+
+<!-- ========== MY COURSES ========== -->
+<h3 style="margin-bottom: 20px; font-size: 22px;">📚 My Courses</h3>
+<div class="grid-3" style="margin-bottom: 40px;">
   {% for e in enrollments %}
-    <!-- Redesigned Course Card -->
     <div class="card card-hover" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
       
-      <!-- Top Icon Banner (Uses the subject's icon from DB) -->
-      <div style="height: 100px; background: linear-gradient(135deg, #EDE9FE, #F5F3FF); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--g100);">
-        <i class="bi {{ e.course.subject.icon|default:'bi-book' }}" style="font-size: 48px; color: var(--p700);"></i>
+      <!-- Image / Gradient Fallback -->
+      <div style="height: 120px; position: relative; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--g100); background: linear-gradient(135deg, #EDE9FE, #F5F3FF); overflow: hidden;">
+        <i class="bi {{ e.course.subject.icon|default:'bi-journal-bookmark-fill' }}" style="font-size: 48px; color: var(--p700); opacity: 0.8; position: absolute;"></i>
+        {% if e.course.thumbnail %}
+          <img src="{{ e.course.thumbnail.url }}" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 1;" onerror="this.style.display='none';">
+        {% endif %}
       </div>
       
-      <!-- Card Content -->
       <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
-        <div style="margin-bottom: 12px;">
+        <div style="margin-bottom: 12px; display: flex; gap: 8px;">
           <span class="badge" style="background: #F1F5F9; color: var(--g700);">Class {{ e.course.subject.grade }}</span>
           <span class="badge" style="background: #F1F5F9; color: var(--g700);">{{ e.course.subject.name }}</span>
         </div>
-        
         <h4 style="font-size: 18px; margin-bottom: 20px; flex: 1;">{{ e.course.title }}</h4>
-        
         <a href="{% url 'course_detail' e.course.pk %}" class="btn btn-primary btn-sm btn-block">
           Continue Learning →
         </a>
       </div>
-
     </div>
   {% empty %}
-    <p style="color:var(--g500);">No enrollments yet.</p>
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+      <p style="color: var(--g500); margin-bottom: 16px;">You are not enrolled in any courses yet.</p>
+      <a href="{% url 'course_list' %}" class="btn btn-primary">Browse Courses</a>
+    </div>
   {% endfor %}
 </div>
 
-<h3 style="margin-bottom:16px;">📝 Recent Quiz Attempts</h3>
-<table class="table">
-  <tr><th>Quiz</th><th>Date</th><th>Score</th></tr>
-  {% for a in attempts %}
+<!-- ========== RECENT QUIZ ATTEMPTS ========== -->
+<h3 style="margin-bottom: 20px; font-size: 22px;">📝 Recent Quiz Attempts</h3>
+<div class="card" style="padding: 0; overflow: hidden;">
+  <table class="table" style="box-shadow: none; margin: 0;">
     <tr>
-      <td>{{ a.quiz.title }}</td>
-      <td>{{ a.started_at|date:"d M Y" }}</td>
-      <td><span class="badge {% if a.percentage >= 75 %}badge-green{% elif a.percentage >= 40 %}badge-amber{% else %}badge-red{% endif %}">{{ a.percentage }}%</span></td>
+      <th>Quiz</th>
+      <th>Date</th>
+      <th>Score</th>
     </tr>
-  {% empty %}
-    <tr><td colspan="3" style="color:var(--g500);">No attempts yet.</td></tr>
-  {% endfor %}
-</table>
+    {% for a in attempts %}
+      <tr>
+        <td><strong>{{ a.quiz.title }}</strong></td>
+        <td style="color: var(--g500);">{{ a.started_at|date:"d M Y" }}</td>
+        <td>
+          <span class="badge {% if a.percentage >= 75 %}badge-green{% elif a.percentage >= 40 %}badge-amber{% else %}badge-red{% endif %}">
+            {{ a.percentage }}%
+          </span>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3" style="text-align: center; color: var(--g500); padding: 24px;">No quiz attempts yet. <a href="{% url 'quiz_list' %}">Take a quiz!</a></td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Chart === 'undefined') return;
+
+    const labels = [{% for a in attempts %}"{{ a.quiz.title|truncatechars:18 }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+    const data = [{% for a in attempts %}{{ a.percentage }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+    const canvas = document.getElementById('myQuizChart');
+    if (canvas) {
+      new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: labels.length ? labels : ['No Data'],
+          datasets: [{
+            label: 'Score %', 
+            data: data.length ? data : [0], 
+            tension: 0.35,
+            borderColor: '#5b21b6', 
+            backgroundColor: 'rgba(91,33,182,0.15)',
+            fill: true, 
+            pointRadius: 5, 
+            pointBackgroundColor: '#5b21b6'
+          }]
+        },
+        options: {
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, max: 100 } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}
