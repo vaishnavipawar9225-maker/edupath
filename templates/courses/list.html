@@ -23,12 +23,19 @@
       
       <!-- Top Visual Banner -->
       {% if course.thumbnail %}
-        <img src="{{ course.thumbnail.url }}" style="width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid var(--g100);">
-      {% else %}
-        <div class="course-cover" style="background: {% cycle 'linear-gradient(135deg, #EDE9FE, #F5F3FF)' 'linear-gradient(135deg, #E0F2FE, #F0F9FF)' 'linear-gradient(135deg, #FCE7F3, #FDF2F8)' %};">
-          <i class="bi {{ course.subject.icon|default:'bi-journal-bookmark-fill' }}"></i>
-        </div>
-      {% endif %}
+  <img src="{{ course.thumbnail.url }}" 
+       style="width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid var(--g100);"
+       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+  
+  <!-- Hidden fallback (only shows if image fails) -->
+  <div class="course-cover" style="display: none; background: linear-gradient(135deg, #EDE9FE, #F5F3FF);">
+    <i class="bi {{ course.subject.icon|default:'bi-journal-bookmark-fill' }}"></i>
+  </div>
+{% else %}
+  <div class="course-cover" style="background: {% cycle 'linear-gradient(135deg, #EDE9FE, #F5F3FF)' 'linear-gradient(135deg, #E0F2FE, #F0F9FF)' 'linear-gradient(135deg, #FCE7F3, #FDF2F8)' %};">
+    <i class="bi {{ course.subject.icon|default:'bi-journal-bookmark-fill' }}"></i>
+  </div>
+{% endif %}
       
       <!-- Card Body -->
       <div style="padding: 24px; flex: 1; display: flex; flex-direction: column;">
