@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Payment Successful{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:0 auto;">
+  <div class="card" style="text-align:center;padding:48px 40px;">
+
+    <div style="width:90px;height:90px;margin:0 auto 24px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;">
+      ✅
+    </div>
+
+    <h2 style="color:var(--green);font-size:26px;margin-bottom:8px;">Payment Successful!</h2>
+    <p style="color:var(--g500);margin-bottom:32px;">Your enrollment is confirmed. Check your email for the receipt.</p>
+
+    <div style="background:var(--bg);border-radius:12px;padding:24px;text-align:left;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--g100);">
+        <span style="color:var(--g500);font-size:13px;">Course</span>
+        <span style="font-weight:600;font-size:13px;">{{ payment.course.title }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--g100);">
+        <span style="color:var(--g500);font-size:13px;">Amount Paid</span>
+        <span style="font-weight:700;font-size:13px;color:var(--green);">₹{{ payment.amount }}</span>
+        {% if payment.discount_amount > 0 %}
+<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--g100);">
+  <span style="color:var(--g500);font-size:13px;">Discount Applied</span>
+  <span style="font-weight:600;font-size:13px;color:var(--green);">− ₹{{ payment.discount_amount }}</span>
+</div>
+{% endif %}
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--g100);">
+        <span style="color:var(--g500);font-size:13px;">Payment Method</span>
+        <span style="font-weight:600;font-size:13px;">{{ payment.get_method_display }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--g100);">
+        <span style="color:var(--g500);font-size:13px;">Transaction ID</span>
+        <span style="font-family:monospace;font-size:12px;">{{ payment.razorpay_payment_id }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;">
+        <span style="color:var(--g500);font-size:13px;">Date</span>
+        <span style="font-weight:600;font-size:13px;">{{ payment.created_at|date:"d M Y, H:i" }}</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:12px;">
+  <a href="{% url 'download_receipt' payment.pk %}" class="btn btn-outline" style="flex:1;">
+    📄 Download Receipt (PDF)
+  </a>
+</div>
+<div style="display:flex;gap:12px;">
+  <a href="{% url 'payment_history' %}" class="btn btn-outline" style="flex:1;">Payment History</a>
+  <a href="{% url 'course_detail' payment.course.pk %}" class="btn btn-primary" style="flex:1;">Start Learning →</a>
+</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  Swal.fire({
+    icon: 'success',
+    title: '🎉 Enrollment Confirmed!',
+    html: 'You now have full access to<br><strong>{{ payment.course.title }}</strong>',
+    confirmButtonText: 'Start Learning',
+    confirmButtonColor: '#5B21B6',
+    timer: 4000,
+    timerProgressBar: true,
+  });
+</script>
+{% endblock %}

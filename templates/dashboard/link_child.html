@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Link Child{% endblock %}
+{% block content %}
+<div class="form-card" style="max-width: 500px;">
+  <h2>👨‍👩‍👧 Link a Student</h2>
+  <p style="color: var(--g500); font-size: 14px; margin-bottom: 24px;">
+    Enter the email address the student used to register on EduPath.
+  </p>
+  
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label>{{ form.student_email.label }}</label>
+      {{ form.student_email }}
+    </div>
+    
+    <div style="display: flex; gap: 12px; margin-top: 24px;">
+      <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary" style="flex: 1;">Link Student</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

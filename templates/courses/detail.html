@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="padding:40px;margin-bottom:24px;background:linear-gradient(135deg,#EDE9FE,#F5F3FF);">
+  <span class="badge">Class {{ course.subject.grade }} · {{ course.subject.name }}</span>
+  <h2 style="margin:12px 0;font-size:32px;">{{ course.title }}</h2>
+  <p style="color:var(--g700);max-width:720px;margin-bottom:24px;">{{ course.description }}</p>
+  <div style="display:flex;gap:16px;align-items:center;">
+    <span style="font-size:28px;font-weight:800;">{% if course.is_free %}FREE{% else %}₹{{ course.price }}{% endif %}</span>
+    {% if user.is_authenticated %}
+      {% if user.role == 'student' %}
+        {% if enrolled %}
+          <span class="badge badge-green">✅ Enrolled</span>
+        {% else %}
+          <a href="{% url 'checkout' course.pk %}" class="btn btn-success btn-lg">Enroll Now</a>
+        {% endif %}
+      {% endif %}
+    {% else %}
+      <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Login to Enroll</a>
+    {% endif %}
+  </div>
+</div>
+
+<h3 style="margin-bottom:16px;">📖 Course Content</h3>
+{% for ch in course.chapters.all %}
+  <div class="card" style="margin-bottom:12px;">
+    <h4>{{ ch.title }}</h4>
+    {% for lec in ch.lectures.all %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--g100);">
+        <span><i class="bi bi-play-circle" style="color:var(--p700);"></i> {{ lec.title }}</span>
+        <a href="{% url 'lecture_view' lec.pk %}" class="btn btn-outline btn-sm">Open</a>
+      </div>
+    {% endfor %}
+  </div>
+{% empty %}
+  <p style="color:var(--g500);">No chapters yet.</p>
+{% endfor %}
+{% endblock %}

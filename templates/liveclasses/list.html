@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin-bottom:24px;">📹 Live Classes</h2>
+<div class="grid-3">
+  {% for c in classes %}
+    <div class="card card-hover">
+      <h4>{{ c.title }}</h4>
+      <p style="color:var(--g500);font-size:13px;margin-bottom:14px;">{{ c.course.title }} · {{ c.scheduled_at|date:"d M Y, H:i" }}</p>
+      <a href="{% url 'join_class' c.pk %}" class="btn btn-danger btn-sm btn-block">🔴 Join Live</a>
+    </div>
+  {% empty %}<p style="color:var(--g500);">No scheduled classes.</p>{% endfor %}
+</div>
+{% endblock %}

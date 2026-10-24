@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Payment History{% endblock %}
+{% block content %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h2>💳 Payment History</h2>
+    <p style="color:var(--g500);font-size:14px;">All your course purchases and receipts.</p>
+  </div>
+  <a href="{% url 'course_list' %}" class="btn btn-primary">+ Buy More Courses</a>
+</div>
+
+<div class="grid-3" style="margin-bottom:32px;">
+  <div class="stat-card"><small>Total Paid</small><h2>₹{{ total_paid }}</h2></div>
+  <div class="stat-card"><small>Total Saved</small><h2>₹{{ total_saved }}</h2></div>
+  <div class="stat-card"><small>Transactions</small><h2>{{ payments|length }}</h2></div>
+</div>
+
+{% if payments %}
+<table class="table">
+  <tr>
+    <th>Course</th>
+    <th>Amount</th>
+    <th>Method</th>
+    <th>Transaction ID</th>
+    <th>Status</th>
+    <th>Date</th>
+    <th></th>
+  </tr>
+  {% for p in payments %}
+    <tr>
+      <td><strong>{{ p.course.title }}</strong></td>
+      <td>
+        ₹{{ p.amount }}
+        {% if p.discount_amount > 0 %}
+          <br><small style="color:var(--green);">−₹{{ p.discount_amount }} saved</small>
+        {% endif %}
+      </td>
+      <td>{{ p.get_method_display }}</td>
+      <td style="font-family:monospace;font-size:11px;">{{ p.razorpay_payment_id|default:"—" }}</td>
+      <td>
+        {% if p.status == "paid" %}<span class="badge badge-green">Paid</span>
+        {% elif p.status == "refunded" %}<span class="badge badge-amber">Refunded</span>
+        {% elif p.status == "pending" %}<span class="badge">Pending</span>
+        {% else %}<span class="badge badge-red">Failed</span>{% endif %}
+      </td>
+      <td style="font-size:13px;">{{ p.created_at|date:"d M Y" }}</td>
+      <td>
+        {% if p.status == "paid" %}
+          <a href="{% url 'download_receipt' p.pk %}" class="btn btn-outline btn-sm">📄</a>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="card" style="text-align:center;padding:60px 24px;">
+  <div style="font-size:48px;margin-bottom:16px;">🧾</div>
+  <h4 style="margin-bottom:8px;">No payments yet</h4>
+  <p style="color:var(--g500);margin-bottom:20px;">When you enroll in a paid course, your receipts will appear here.</p>
+  <a href="{% url 'course_list' %}" class="btn btn-primary">Browse Courses</a>
+</div>
+{% endif %}
+{% endblock %}

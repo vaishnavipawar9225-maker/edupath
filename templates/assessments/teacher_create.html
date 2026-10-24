@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Create Quiz{% endblock %}
+{% block content %}
+<div class="form-card" style="max-width:640px;">
+  <h2>Create New Quiz</h2>
+  <p style="color:var(--g500);font-size:14px;margin-bottom:24px;">
+    Questions are auto-generated based on the course subject. Choose how many you want.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label>Course</label>
+      {{ form.course }}
+    </div>
+    <div class="form-group">
+      <label>Quiz Title</label>
+      {{ form.title }}
+    </div>
+    <div class="form-group">
+      <label>Duration (minutes)</label>
+      {{ form.duration_minutes }}
+    </div>
+    <div class="form-group">
+      <label>Number of Questions to Generate</label>
+      {{ form.num_questions }}
+      <small style="color:var(--g500);font-size:12px;">{{ form.num_questions.help_text }}</small>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px;">
+      <a href="{% url 'teacher_quiz_list' %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary" style="flex:1;">🤖 Generate & Publish</button>
+    </div>
+  </form>
+</div>
+<style>
+  .form-card input, .form-card select {
+    width:100%;padding:11px 14px;border:1.5px solid #E2E8F0;
+    border-radius:10px;font-size:14px;background:#fff;font-family:inherit;
+  }
+</style>
+{% endblock %}

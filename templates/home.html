@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ========== NEW SPLIT HERO SECTION ========== -->
+<div class="hero hero-split">
+  <div class="hero-content">
+    <h1>Learn Smarter with EduPath</h1>
+    <p>Interactive courses, live classes, and instant-feedback quizzes — built for students of Classes 5 to 10.</p>
+    <div class="hero-buttons">
+      <a href="{% url 'course_list' %}" class="btn btn-light btn-lg">Explore Courses →</a>
+      <!-- FIXED BUTTON: Added inline styles to force visibility -->
+      <a href="{% url 'register' %}" class="btn btn-lg" style="background: rgba(255,255,255,0.2); color: #fff; border: 1.5px solid rgba(255,255,255,0.5); backdrop-filter: blur(10px);">Join Free</a>
+    </div>
+  </div>
+  
+  <div class="hero-image-wrapper">
+    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop" alt="Students learning online" class="hero-img">
+    
+    <div class="floating-badge">
+      <div style="font-size: 24px; margin-bottom: 4px;">⭐</div>
+      <div>
+        <strong style="display: block; font-size: 16px; color: var(--g900);">4.9/5 Rating</strong>
+        <span style="font-size: 12px; color: var(--g500);">From 2,000+ students</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FEATURED COURSES ========== -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin: 40px 0 20px;">
+  <h3 style="margin: 0; font-size: 24px;">⭐ Featured Courses</h3>
+  <a href="{% url 'course_list' %}" style="color: var(--p700); font-weight: 600; text-decoration: none;">View All →</a>
+</div>
+
+<div class="grid-3">
+  {% for course in featured %}
+    <div class="card card-course card-hover">
+      {% if course.thumbnail %}
+        <img src="{{ course.thumbnail.url }}" style="height:170px;object-fit:cover;border-radius:10px;margin-bottom:12px;">
+      {% endif %}
+      <span class="badge">Class {{ course.subject.grade }} · {{ course.subject.name }}</span>
+      <h4>{{ course.title }}</h4>
+      <p>{{ course.description|truncatewords:15 }}</p>
+      <div class="price">{% if course.is_free %}FREE{% else %}₹{{ course.price }}{% endif %}</div>
+      <a href="{% url 'course_detail' course.pk %}" class="btn btn-primary btn-sm btn-block">View Course</a>
+    </div>
+  {% empty %}
+    <p style="color: var(--g500);">No courses yet. Add them from the admin panel.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ live_class.title }}</h2>
+<p style="color:var(--g500);margin-bottom:20px;">{{ live_class.course.title }}</p>
+{% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+{% else %}
+  <div id="jitsi" style="height:620px;border-radius:16px;overflow:hidden;"></div>
+  <script src="https://meet.jit.si/external_api.js"></script>
+  <script>
+    new JitsiMeetExternalAPI("meet.jit.si", {
+      roomName: "{{ live_class.jitsi_room }}",
+      parentNode: document.getElementById("jitsi"),
+      userInfo: { displayName: "{{ user.username }}" },
+      configOverwrite: { prejoinPageEnabled: false }
+    });
+  </script>
+{% endif %}
+{% endblock %}

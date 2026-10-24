@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Parent-Teacher Meetings{% endblock %}
+{% block content %}
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+    <div>
+        <h2 style="margin-bottom: 8px; font-size: 28px;">🤝 Parent-Teacher Meetings</h2>
+        <p style="color: var(--g500); font-size: 16px;">Schedule and join meetings with your child's teachers.</p>
+    </div>
+    <a href="{% url 'request_meeting' %}" class="btn btn-primary">+ Request New Meeting</a>
+</div>
+
+<div class="grid-2">
+    {% for meeting in meetings %}
+    <div class="card card-hover" style="padding: 24px; border-left: 4px solid var(--p700);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+            <div>
+                <h4 style="font-size: 18px; margin-bottom: 4px;">{{ meeting.subject }} Meeting</h4>
+                <p style="color: var(--g500); font-size: 14px;">with <strong>{{ meeting.teacher }}</strong></p>
+            </div>
+            <span class="badge badge-green">{{ meeting.status }}</span>
+        </div>
+        
+        <div style="background: var(--bg); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 24px;">
+            <div style="font-size: 14px; color: var(--g700);">
+                <i class="bi bi-calendar-event" style="color: var(--p700);"></i> {{ meeting.date }}
+            </div>
+            <div style="font-size: 14px; color: var(--g700);">
+                <i class="bi bi-clock" style="color: var(--p700);"></i> {{ meeting.time }}
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px;">
+            <!-- We can use Jitsi Meet for PTMs too! -->
+            <a href="https://meet.jit.si/EduPath-PTM-{{ meeting.id }}" target="_blank" class="btn btn-primary btn-block">
+                <i class="bi bi-camera-video"></i> Join Video Call
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+        <h4 style="margin-bottom: 8px;">No meetings scheduled</h4>
+        <p style="color: var(--g500);">Click "Request New Meeting" to schedule a PTM.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

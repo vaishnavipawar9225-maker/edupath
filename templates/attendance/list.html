@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>My Attendance</h2>
+<div class="stat-card" style="max-width:320px;margin:24px 0;">
+  <small>Overall Attendance</small>
+  <h2>{{ percent }}%</h2>
+  <p style="color:var(--g500);font-size:13px;">{{ present }}/{{ total }} days</p>
+</div>
+<table class="table">
+  <tr><th>Course</th><th>Date</th><th>Status</th></tr>
+  {% for r in records %}
+    <tr>
+      <td>{{ r.course.title }}</td>
+      <td>{{ r.date }}</td>
+      <td>
+        {% if r.status == "present" %}<span class="badge badge-green">Present</span>
+        {% elif r.status == "absent" %}<span class="badge badge-red">Absent</span>
+        {% else %}<span class="badge badge-amber">Late</span>{% endif %}
+      </td>
+    </tr>
+  {% empty %}<tr><td colspan="3" style="color:var(--g500);">No records.</td></tr>{% endfor %}
+</table>
+{% endblock %}

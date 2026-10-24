@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Mark Attendance — {{ course.title }}</h2>
+<form method="post" style="margin-top:24px;">
+  {% csrf_token %}
+  <div class="form-group" style="max-width:240px;">
+    <label>Date</label>
+    <input type="date" name="date" value="{{ today|date:'Y-m-d' }}" class="form-input">
+  </div>
+  <table class="table" style="margin-top:16px;">
+    <tr><th>Student</th><th>Status</th></tr>
+    {% for e in students %}
+      <tr>
+        <td>{{ e.student.user.username }} (Class {{ e.student.grade }})</td>
+        <td>
+          <select name="status_{{ e.student.id }}" class="form-input" style="max-width:180px;">
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="late">Late</option>
+          </select>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="2" style="color:var(--g500);">No enrolled students.</td></tr>
+    {% endfor %}
+  </table>
+  <button class="btn btn-primary" style="margin-top:16px;">Save Attendance</button>
+</form>
+{% endblock %}

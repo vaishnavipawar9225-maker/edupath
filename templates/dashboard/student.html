@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>👋 Hi, {{ user.username }}</h2>
+<p style="color:var(--g500);margin-bottom:24px;">Here's your learning snapshot.</p>
+
+<div class="grid-3" style="margin-bottom:32px;">
+  <div class="stat-card"><small>Enrolled Courses</small><h2>{{ enrollments|length }}</h2></div>
+  <div class="stat-card"><small>Attendance</small><h2>{{ attendance_percent }}%</h2></div>
+  <div class="stat-card"><small>Recent Quizzes</small><h2>{{ attempts|length }}</h2></div>
+</div>
+
+<h3 style="margin-bottom:16px;">📚 My Courses</h3>
+<div class="grid-3" style="margin-bottom:40px;">
+  {% for e in enrollments %}
+    <!-- Redesigned Course Card -->
+    <div class="card card-hover" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+      
+      <!-- Top Icon Banner (Uses the subject's icon from DB) -->
+      <div style="height: 100px; background: linear-gradient(135deg, #EDE9FE, #F5F3FF); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--g100);">
+        <i class="bi {{ e.course.subject.icon|default:'bi-book' }}" style="font-size: 48px; color: var(--p700);"></i>
+      </div>
+      
+      <!-- Card Content -->
+      <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+        <div style="margin-bottom: 12px;">
+          <span class="badge" style="background: #F1F5F9; color: var(--g700);">Class {{ e.course.subject.grade }}</span>
+          <span class="badge" style="background: #F1F5F9; color: var(--g700);">{{ e.course.subject.name }}</span>
+        </div>
+        
+        <h4 style="font-size: 18px; margin-bottom: 20px; flex: 1;">{{ e.course.title }}</h4>
+        
+        <a href="{% url 'course_detail' e.course.pk %}" class="btn btn-primary btn-sm btn-block">
+          Continue Learning →
+        </a>
+      </div>
+
+    </div>
+  {% empty %}
+    <p style="color:var(--g500);">No enrollments yet.</p>
+  {% endfor %}
+</div>
+
+<h3 style="margin-bottom:16px;">📝 Recent Quiz Attempts</h3>
+<table class="table">
+  <tr><th>Quiz</th><th>Date</th><th>Score</th></tr>
+  {% for a in attempts %}
+    <tr>
+      <td>{{ a.quiz.title }}</td>
+      <td>{{ a.started_at|date:"d M Y" }}</td>
+      <td><span class="badge {% if a.percentage >= 75 %}badge-green{% elif a.percentage >= 40 %}badge-amber{% else %}badge-red{% endif %}">{{ a.percentage }}%</span></td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="3" style="color:var(--g500);">No attempts yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

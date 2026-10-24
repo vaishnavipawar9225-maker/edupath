@@ -1,0 +1,56 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="margin-bottom:24px;">
+        <h2>Quiz Result: {{ attempt.quiz.title }}</h2>
+        <p>Course: {{ attempt.quiz.course.title }}</p>
+
+        <h3>Score: {{ attempt.score }} / {{ attempt.quiz.total_marks }}</h3>
+        <h3>Percentage: {{ attempt.percentage }}%</h3>
+
+        <p>
+            Submitted:
+            {{ attempt.completed_at|date:"d M Y, h:i A" }}
+        </p>
+
+        <a href="{% url 'quiz_list' %}" class="btn btn-primary">
+            Back to My Quizzes
+        </a>
+    </div>
+
+    <h3>Answer Review</h3>
+
+    {% for answer in answers %}
+    <div class="card" style="margin-bottom:16px;">
+        <h4>{{ forloop.counter }}. {{ answer.question.text }}</h4>
+
+        <p>
+            Your answer:
+            {% if answer.selected_choice %}
+                {{ answer.selected_choice.text }}
+            {% else %}
+                Not answered
+            {% endif %}
+        </p>
+
+        {% if answer.is_correct %}
+            <p>✅ Correct answer</p>
+        {% else %}
+            <p>❌ Incorrect answer</p>
+            <p>
+                Correct answer:
+                {% for choice in answer.question.choices.all %}
+                    {% if choice.is_correct %}
+                        {{ choice.text }}
+                    {% endif %}
+                {% endfor %}
+            </p>
+        {% endif %}
+    </div>
+    {% empty %}
+    <p>No answers were recorded for this attempt.</p>
+    {% endfor %}
+</div>
+{% endblock %}

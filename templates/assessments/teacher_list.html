@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}My Quizzes{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h2>📝 My Quizzes</h2>
+    <p style="color:var(--g500);font-size:14px;">Create and manage quizzes for your courses.</p>
+  </div>
+  <a href="{% url 'teacher_create_quiz' %}" class="btn btn-primary btn-lg">+ Create Quiz</a>
+</div>
+
+<div class="grid-3" style="margin-bottom:32px;">
+  <div class="stat-card"><small>Total Quizzes</small><h2>{{ stats.total_quizzes }}</h2></div>
+  <div class="stat-card"><small>Published</small><h2>{{ stats.published }}</h2></div>
+  <div class="stat-card"><small>Total Attempts</small><h2>{{ stats.total_attempts }}</h2></div>
+</div>
+
+{% if quizzes %}
+<table class="table">
+  <tr>
+    <th>Quiz</th>
+    <th>Course</th>
+    <th>Questions</th>
+    <th>Marks</th>
+    <th>Attempts</th>
+    <th>Status</th>
+    <th></th>
+  </tr>
+  {% for quiz in quizzes %}
+    <tr>
+      <td><strong>{{ quiz.title }}</strong></td>
+      <td>{{ quiz.course.title }}</td>
+      <td>{{ quiz.questions.count }}</td>
+      <td>{{ quiz.total_marks }}</td>
+      <td>{{ quiz.quizattempt_set.count }}</td>
+      <td>
+        {% if quiz.is_published %}
+          <span class="badge badge-green">Published</span>
+        {% else %}
+          <span class="badge badge-amber">Draft</span>
+        {% endif %}
+      </td>
+      <td>
+        <a href="{% url 'teacher_quiz_detail' quiz.pk %}" class="btn btn-outline btn-sm">View</a>
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="card" style="text-align:center;padding:60px 24px;">
+  <div style="font-size:48px;margin-bottom:16px;">📝</div>
+  <h4 style="margin-bottom:8px;">No quizzes yet</h4>
+  <p style="color:var(--g500);margin-bottom:20px;">Create your first quiz — questions are auto-generated.</p>
+  <a href="{% url 'teacher_create_quiz' %}" class="btn btn-primary">Create Your First Quiz</a>
+</div>
+{% endif %}
+{% endblock %}

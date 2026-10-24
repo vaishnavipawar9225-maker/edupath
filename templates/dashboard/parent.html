@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Parent Dashboard{% endblock %}
+{% block content %}
+
+<!-- Header & Link Child Button -->
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+  <div>
+    <h2 style="margin-bottom: 8px;">👨‍👩‍👧 Parent Dashboard</h2>
+    <p style="color: var(--g500);">Track your child's progress, quiz scores, and attendance at a glance.</p>
+  </div>
+  <a href="{% url 'link_child' %}" class="btn btn-primary">+ Link New Child</a>
+</div>
+
+<!-- Main Loop -->
+{% for data in child_data %}
+<div class="card" style="margin-top:24px;padding:28px;">
+  
+  <!-- Child Info Header -->
+  <h4 style="font-size:20px;margin-bottom:4px;">{{ data.child.get_full_name|default:data.child.username }}</h4>
+  <p style="color:var(--g500);font-size:13px;margin-bottom:20px;">Class {{ data.profile.grade }} · {{ data.child.email }}</p>
+
+  <!-- Stat Cards -->
+  <div class="grid-3" style="margin-bottom:24px;">
+    <div class="stat-card"><small>Attendance</small><h2>{{ data.attendance_percent }}%</h2></div>
+    <div class="stat-card"><small>Quiz Attempts</small><h2>{{ data.attempts|length }}</h2></div>
+    <div class="stat-card"><small>Enrolled Courses</small><h2>{{ data.enrollments }}</h2></div>
+  </div>
+
+  <!-- Side-by-Side Charts -->
+  <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 20px;">
+    <!-- Quiz Performance -->
+    <div class="card" style="flex: 1; min-width: 300px; padding: 20px;">
+      <h6 style="margin-bottom: 16px;">📈 Quiz Performance</h6>
+      <div style="position: relative; height: 250px; width: 100%;">
+        <canvas id="quizChart{{ data.child.id }}"></canvas>
+      </div>
+    </div>
+    <!-- Attendance -->
+    <div class="card" style="flex: 1; min-width: 300px; padding: 20px;">
+      <h6 style="margin-bottom: 16px;">🎯 Attendance</h6>
+      <div style="position: relative; height: 250px; width: 100%;">
+        <canvas id="attChart{{ data.child.id }}"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Quizzes List -->
+  <h6 class="mt-4" style="margin-top: 24px; margin-bottom: 12px;">🕘 Recent Quiz History</h6>
+  <ul class="list-group" style="list-style:none; padding:0;">
+    {% for a in data.attempts %}
+      <li style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--g100);">
+        <span>{{ a.quiz.title }}</span>
+        <span>
+          <small class="text-muted me-2" style="color:var(--g500); margin-right:12px;">{{ a.started_at|date:"d M Y" }}</small>
+          <span class="badge {% if a.percentage >= 75 %}badge-green{% elif a.percentage >= 40 %}badge-amber{% else %}badge-red{% endif %}">
+            {{ a.percentage }}%
+          </span>
+        </span>
+      </li>
+    {% empty %}
+      <li style="padding:12px; color:var(--g500);">No quiz attempts yet.</li>
+    {% endfor %}
+  </ul>
+
+</div>
+{% empty %}
+<!-- Empty State (If no children are linked) -->
+<div class="card" style="text-align: center; padding: 60px 20px; margin-top: 24px;">
+  <div style="font-size: 48px; margin-bottom: 16px;">👨‍👩‍👧</div>
+  <h4 style="margin-bottom: 8px;">No children linked yet</h4>
+  <p style="color: var(--g500); margin-bottom: 20px;">Click the button below to link your child's student account.</p>
+  <a href="{% url 'link_child' %}" class="btn btn-primary">Link a Child Now</a>
+</div>
+{% endfor %}
+
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Chart === 'undefined') {
+      console.error("Chart.js failed to load. Check CDN/internet.");
+      return;
+    }
+
+    {% for data in child_data %}
+      // 🛠️ THE FIX: Wrapping each child's script in its own block scope
+      {
+        const quizEl = document.getElementById("quizChart{{ data.child.id }}");
+        const attEl = document.getElementById("attChart{{ data.child.id }}");
+
+        if (quizEl) {
+          new Chart(quizEl, {
+            type: 'bar',
+            data: {
+              labels: {{ data.quiz_labels|safe }},
+              datasets: [{
+                label: 'Score %',
+                data: {{ data.quiz_percentages|safe }},
+                backgroundColor: '#5B21B6',
+                borderRadius: 6,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true, max: 100 } }
+            }
+          });
+        }
+
+        if (attEl) {
+          new Chart(attEl, {
+            type: 'doughnut',
+            data: {
+              labels: ['Present', 'Absent', 'Late'],
+              datasets: [{
+                data: [{{ data.attendance_present }}, {{ data.attendance_absent }}, {{ data.attendance_late }}],
+                backgroundColor: ['#16A34A', '#DC2626', '#F59E0B'],
+                borderWidth: 2,
+                borderColor: '#fff'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '60%',
+              plugins: { legend: { position: 'bottom' } }
+            }
+          });
+        }
+      }
+    {% endfor %}
+  });
+</script>
+{% endblock %}

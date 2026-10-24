@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% block title %}Checkout — {{ course.title }}{% endblock %}
+{% block content %}
+
+<style>
+  .checkout-wrap { max-width: 1000px; margin: 0 auto; }
+  .demo-banner {
+    background: linear-gradient(90deg, #FEF3C7, #FDE68A);
+    border: 1px solid #F59E0B; border-radius: 12px;
+    padding: 14px 20px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 14px; color: #78350F;
+  }
+  .demo-banner strong { color: #92400E; }
+  .checkout-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } }
+
+  .pay-methods { background: #fff; border-radius: 16px; padding: 28px; border: 1px solid var(--g100); box-shadow: var(--shadow-md); }
+  .pay-methods h3 { margin-bottom: 20px; font-size: 18px; }
+
+  .method-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .method-tab {
+    flex: 1; min-width: 100px; padding: 12px 8px;
+    border: 2px solid var(--g100); border-radius: 10px;
+    background: #fff; cursor: pointer; text-align: center;
+    font-size: 12px; font-weight: 600; color: var(--g700);
+    transition: all .15s;
+  }
+  .method-tab .icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  .method-tab:hover { border-color: var(--p700); }
+  .method-tab.active { border-color: var(--p700); background: #F5F3FF; color: var(--p700); }
+  .method-tab .badge-demo {
+    display: inline-block; font-size: 9px; background: #FEF3C7;
+    color: #92400E; padding: 1px 6px; border-radius: 10px; margin-top: 4px;
+  }
+
+  .method-panel { display: none; padding: 20px; background: var(--bg); border-radius: 12px; margin-bottom: 20px; }
+  .method-panel.active { display: block; }
+
+  .upi-apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .upi-app {
+    background: #fff; padding: 16px 8px; border-radius: 10px;
+    text-align: center; border: 1.5px solid var(--g100); cursor: pointer;
+    transition: .15s;
+  }
+  .upi-app:hover { border-color: var(--p700); background: #FAF5FF; }
+  .upi-app .emoji { font-size: 28px; display: block; margin-bottom: 6px; }
+  .upi-app small { font-size: 11px; color: var(--g700); font-weight: 600; }
+
+  .card-form { display: grid; gap: 14px; }
+  .card-form label { font-size: 12px; font-weight: 600; color: var(--g700); margin-bottom: 4px; display: block; }
+  .card-form input, .card-form select {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--g100);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+  }
+  .card-form input:focus { outline: none; border-color: var(--p700); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .bank-option {
+    background: #fff; padding: 14px 16px; border-radius: 10px;
+    border: 1.5px solid var(--g100); cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--g700);
+  }
+  .bank-option:hover { border-color: var(--p700); }
+  .bank-option input { margin-right: 8px; }
+
+  .order-summary { background: #fff; border-radius: 16px; padding: 28px; border: 1px solid var(--g100); box-shadow: var(--shadow-md); height: fit-content; position: sticky; top: 90px; }
+  .summary-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; }
+  .summary-row.total { font-size: 22px; font-weight: 800; border-top: 2px solid var(--g100); padding-top: 16px; margin-top: 8px; }
+
+  .pay-btn {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--p700); color: #fff; border: none; border-radius: 12px;
+    cursor: pointer; margin-top: 20px; transition: .15s;
+  }
+  .pay-btn:hover:not(:disabled) { background: var(--p900); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+  .pay-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+  .security-badges { display: flex; gap: 16px; justify-content: center; margin-top: 20px; font-size: 12px; color: var(--g500); }
+  .security-badges span { display: flex; align-items: center; gap: 4px; }
+
+  .processing-overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, .8);
+    display: none; align-items: center; justify-content: center; z-index: 9999;
+  }
+  .processing-overlay.active { display: flex; }
+  .processing-box {
+    background: #fff; border-radius: 20px; padding: 48px 40px; text-align: center;
+    max-width: 360px; animation: popIn .3s;
+  }
+  @keyframes popIn { from { transform: scale(.9); opacity: 0; } }
+  .spinner {
+    width: 60px; height: 60px; border: 5px solid #EDE9FE;
+    border-top-color: var(--p700); border-radius: 50%;
+    animation: spin 1s linear infinite; margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="checkout-wrap">
+
+  <div class="demo-banner">
+    <span style="font-size:22px;">🧪</span>
+    <div>
+      <strong>Demo Payment Mode</strong> — This is a simulated checkout for demonstration.
+      No real money will be charged. All payment methods are mock-ups.
+    </div>
+  </div>
+
+  <div class="checkout-grid">
+
+    <div class="pay-methods">
+      <h3>Choose Payment Method</h3>
+
+      <div class="method-tabs">
+        <button class="method-tab active" data-panel="upi" onclick="switchPanel('upi')">
+          <span class="icon">📱</span>UPI<span class="badge-demo">DEMO</span>
+        </button>
+        <button class="method-tab" data-panel="card" onclick="switchPanel('card')">
+          <span class="icon">💳</span>Card<span class="badge-demo">DEMO</span>
+        </button>
+        <button class="method-tab" data-panel="netbanking" onclick="switchPanel('netbanking')">
+          <span class="icon">🏦</span>Net Banking<span class="badge-demo">DEMO</span>
+        </button>
+        <button class="method-tab" data-panel="wallet" onclick="switchPanel('wallet')">
+          <span class="icon">👛</span>Wallet<span class="badge-demo">DEMO</span>
+        </button>
+      </div>
+
+      <div class="method-panel active" id="panel-upi">
+        <p style="font-size:13px;color:var(--g500);margin-bottom:14px;">Pay using any UPI app</p>
+        <div class="upi-apps">
+          <div class="upi-app"><span class="emoji">🟢</span><small>Google Pay</small></div>
+          <div class="upi-app"><span class="emoji">🟣</span><small>PhonePe</small></div>
+          <div class="upi-app"><span class="emoji">🔵</span><small>Paytm</small></div>
+          <div class="upi-app"><span class="emoji">🟠</span><small>BHIM</small></div>
+        </div>
+        <label style="font-size:12px;font-weight:600;color:var(--g700);margin-bottom:6px;display:block;">Or enter UPI ID</label>
+        <input type="text" placeholder="yourname@upi (demo — anything works)" style="width:100%;padding:12px 14px;border:1.5px solid var(--g100);border-radius:8px;font-size:14px;">
+      </div>
+
+      <div class="method-panel" id="panel-card">
+        <div class="card-form">
+          <div>
+            <label>Card Number</label>
+            <input type="text" placeholder="4242 4242 4242 4242" maxlength="19">
+          </div>
+          <div>
+            <label>Cardholder Name</label>
+            <input type="text" placeholder="Name on card">
+          </div>
+          <div class="form-row">
+            <div><label>Expiry</label><input type="text" placeholder="MM/YY" maxlength="5"></div>
+            <div><label>CVV</label><input type="password" placeholder="123" maxlength="3"></div>
+          </div>
+          <p style="font-size:12px;color:var(--g500);">💡 Any card details work in demo mode</p>
+        </div>
+      </div>
+
+      <div class="method-panel" id="panel-netbanking">
+        <p style="font-size:13px;color:var(--g500);margin-bottom:14px;">Select your bank</p>
+        <div class="bank-grid">
+          <label class="bank-option"><input type="radio" name="bank" value="hdfc"> HDFC Bank</label>
+          <label class="bank-option"><input type="radio" name="bank" value="sbi"> State Bank of India</label>
+          <label class="bank-option"><input type="radio" name="bank" value="icici"> ICICI Bank</label>
+          <label class="bank-option"><input type="radio" name="bank" value="axis"> Axis Bank</label>
+          <label class="bank-option"><input type="radio" name="bank" value="kotak"> Kotak Bank</label>
+          <label class="bank-option"><input type="radio" name="bank" value="pnb"> Punjab National Bank</label>
+        </div>
+      </div>
+
+      <div class="method-panel" id="panel-wallet">
+        <p style="font-size:13px;color:var(--g500);margin-bottom:14px;">Select wallet</p>
+        <div class="upi-apps">
+          <div class="upi-app"><span class="emoji">🔵</span><small>Paytm</small></div>
+          <div class="upi-app"><span class="emoji">🟣</span><small>PhonePe</small></div>
+          <div class="upi-app"><span class="emoji">🟠</span><small>Amazon Pay</small></div>
+          <div class="upi-app"><span class="emoji">🟡</span><small>Mobikwik</small></div>
+        </div>
+      </div>
+
+      <button class="pay-btn" id="payBtn" onclick="startPayment()">
+        Pay ₹{{ course.price }}
+      </button>
+
+      <div class="security-badges">
+        <span>🔒 SSL Secured</span>
+        <span>🛡️ PCI Compliant</span>
+        <span>✅ 100% Safe</span>
+      </div>
+    </div>
+
+    <div class="order-summary">
+  <h3 style="margin-bottom: 20px; font-size: 18px;">Order Summary</h3>
+
+  <div style="display:flex; gap:14px; margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--g100);">
+    {% if course.thumbnail %}
+      <img src="{{ course.thumbnail.url }}" style="width:70px;height:70px;border-radius:10px;object-fit:cover;">
+    {% else %}
+      <div style="width:70px;height:70px;border-radius:10px;background:linear-gradient(135deg,#5B21B6,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:28px;">📚</div>
+    {% endif %}
+    <div>
+      <p style="font-weight:700;font-size:15px;margin-bottom:4px;">{{ course.title }}</p>
+      <p style="font-size:12px;color:var(--g500);">Class {{ course.subject.grade }} · {{ course.subject.name }}</p>
+    </div>
+  </div>
+
+  <!-- COUPON -->
+  <div style="margin-bottom: 20px; padding: 14px; background:#FAF5FF; border-radius:10px; border:1.5px dashed #C4B5FD;">
+    <label style="font-size:12px;font-weight:600;color:var(--p700);margin-bottom:6px;display:block;">
+      🎟️ Have a coupon?
+    </label>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="couponInput" placeholder="e.g. SAVE20"
+             style="flex:1;padding:10px 12px;border:1.5px solid var(--g100);border-radius:8px;font-size:13px;text-transform:uppercase;">
+      <button type="button" onclick="applyCoupon()"
+              style="padding:10px 18px;background:var(--p700);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+        Apply
+      </button>
+    </div>
+    <div id="couponMsg" style="font-size:12px;margin-top:8px;display:none;"></div>
+  </div>
+
+  <div class="summary-row">
+    <span>Subtotal</span>
+    <span>₹<span id="subtotal">{{ course.price }}</span></span>
+  </div>
+  <div class="summary-row" id="discountRow" style="display:none;">
+    <span>Discount</span>
+    <span style="color:var(--green);">− ₹<span id="discountAmt">0</span></span>
+  </div>
+  <div class="summary-row total">
+    <span>Total</span>
+    <span>₹<span id="finalAmount">{{ course.price }}</span></span>
+  </div>
+
+  <div style="margin-top:20px;padding:14px;background:#F0FDF4;border-radius:10px;font-size:12px;color:#166534;">
+    ✅ Lifetime access to all lectures, quizzes, and live classes for this course.
+  </div>
+</div>
+
+  </div>
+</div>
+
+<div class="processing-overlay" id="processingOverlay">
+  <div class="processing-box">
+    <div class="spinner"></div>
+    <h4 style="margin-bottom:8px;">Processing Payment</h4>
+    <p style="font-size:13px;color:var(--g500);" id="processingText">Connecting to secure gateway...</p>
+  </div>
+</div>
+
+<form method="post" action="{% url 'mock_payment_confirm' course.pk %}" id="paymentForm" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="method" id="methodInput" value="upi">
+  <input type="hidden" name="coupon_code" id="couponInputHidden" value="">
+</form>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+let currentMethod = 'upi';
+let appliedCoupon = null;
+let finalPrice = {{ course.price }};
+
+function switchPanel(name) {
+  currentMethod = name;
+  document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.method-tab[data-panel="${name}"]`).classList.add('active');
+  document.querySelectorAll('.method-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('methodInput').value = name;
+}
+
+async function applyCoupon() {
+  const code = document.getElementById('couponInput').value.trim();
+  const msg = document.getElementById('couponMsg');
+
+  if (!code) {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Please enter a coupon code';
+    return;
+  }
+
+  try {
+    const res = await fetch(`{% url 'apply_coupon' course.pk %}?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+
+    if (data.valid) {
+      appliedCoupon = data.code;
+      finalPrice = data.final;
+      document.getElementById('discountRow').style.display = 'flex';
+      document.getElementById('discountAmt').textContent = data.discount;
+      document.getElementById('finalAmount').textContent = data.final;
+      document.getElementById('payBtn').textContent = `Pay ₹${data.final}`;
+      document.getElementById('couponInputHidden').value = data.code;
+
+      msg.style.display = 'block';
+      msg.style.color = 'var(--green)';
+      msg.innerHTML = `✅ <strong>${data.code}</strong> applied — ${data.discount_percent}% off!`;
+    } else {
+      appliedCoupon = null;
+      finalPrice = {{ course.price }};
+      msg.style.display = 'block';
+      msg.style.color = 'var(--red)';
+      msg.textContent = '❌ ' + data.error;
+    }
+  } catch (err) {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--red)';
+    msg.textContent = '⚠️ Network error. Try again.';
+  }
+}
+
+function startPayment() {
+  Swal.fire({
+    title: 'Confirm Payment',
+    html: `You are about to pay <strong>₹${finalPrice}</strong><br>for <strong>{{ course.title }}</strong>${appliedCoupon ? `<br><small style="color:var(--green);">🎟️ Coupon ${appliedCoupon} applied</small>` : ''}`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: '💳 Confirm & Pay',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#5B21B6',
+    cancelButtonColor: '#64748B',
+    reverseButtons: true,
+  }).then(result => {
+    if (result.isConfirmed) processPayment();
+  });
+}
+
+function processPayment() {
+  const overlay = document.getElementById('processingOverlay');
+  const text = document.getElementById('processingText');
+  const btn = document.getElementById('payBtn');
+
+  overlay.classList.add('active');
+  btn.disabled = true;
+
+  const steps = [
+    'Connecting to secure gateway...',
+    'Verifying payment method...',
+    'Processing transaction...',
+    'Confirming with bank...',
+    'Payment successful! 🎉',
+  ];
+
+  let i = 0;
+  const interval = setInterval(() => {
+    text.textContent = steps[i];
+    i++;
+    if (i >= steps.length) {
+      clearInterval(interval);
+      setTimeout(() => document.getElementById('paymentForm').submit(), 600);
+    }
+  }, 600);
+}
+</script>
+
+
+{% endblock %}

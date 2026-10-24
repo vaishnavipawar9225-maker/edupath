@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <div>
+    <h2>👨‍🏫 Teacher Dashboard</h2>
+    <p style="color:var(--g500);font-size:14px;">Welcome back, {{ user.get_full_name|default:user.username }}.</p>
+  </div>
+  <a href="{% url 'teacher_create_quiz' %}" class="btn btn-primary">+ Create Quiz</a>
+</div>
+
+<h4 style="margin-bottom:16px;">📚 My Courses</h4>
+<div class="grid-3" style="margin-bottom:40px;">
+  {% for c in courses %}
+    <div class="card card-hover">
+      <h4>{{ c.title }}</h4>
+      <p style="color:var(--g500);font-size:13px;margin-bottom:14px;">
+        {{ c.enrollments.count }} students · {{ c.quizzes.count }} quizzes
+      </p>
+      <a href="{% url 'mark_attendance' c.pk %}" class="btn btn-primary btn-sm btn-block" style="margin-bottom:8px;">📋 Mark Attendance</a>
+      <a href="{% url 'course_detail' c.pk %}" class="btn btn-outline btn-sm btn-block">View Course</a>
+    </div>
+  {% empty %}
+    <p style="color:var(--g500);">No courses assigned yet.</p>
+  {% endfor %}
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+  <h4>📝 My Quizzes</h4>
+  <a href="{% url 'teacher_quiz_list' %}" style="color:var(--p700);font-size:14px;text-decoration:none;font-weight:600;">View All →</a>
+</div>
+<div class="grid-3">
+  {% for c in courses %}
+    {% for quiz in c.quizzes.all|slice:":2" %}
+      <div class="card card-hover">
+        <h4>{{ quiz.title }}</h4>
+        <p style="color:var(--g500);font-size:13px;margin-bottom:14px;">
+          {{ quiz.questions.count }} questions · {{ quiz.total_marks }} marks · {{ quiz.quizattempt_set.count }} attempts
+        </p>
+        <a href="{% url 'teacher_quiz_detail' quiz.pk %}" class="btn btn-outline btn-sm btn-block">Manage Quiz</a>
+      </div>
+    {% endfor %}
+  {% empty %}
+    <p style="color:var(--g500);">No quizzes yet. Click "+ Create Quiz" above.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ lecture.title }}</h2>
+<p style="color:var(--g500);margin-bottom:24px;">{{ lecture.chapter.course.title }} · {{ lecture.chapter.title }}</p>
+{% if lecture.video_url %}
+  <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:16px;overflow:hidden;margin-bottom:20px;">
+    <iframe src="{{ lecture.video_url }}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe>
+  </div>
+{% endif %}
+{% if lecture.pdf %}
+  <a href="{{ lecture.pdf.url }}" class="btn btn-outline" download>📄 Download PDF</a>
+{% endif %}
+{% endblock %}

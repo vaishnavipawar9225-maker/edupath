@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-card">
+  <h2>Complete Payment</h2>
+  <div style="background:var(--bg);border-radius:12px;padding:20px;margin-bottom:20px;">
+    <p style="color:var(--g500);font-size:13px;margin-bottom:4px;">Course</p>
+    <p style="font-size:17px;font-weight:700;margin-bottom:12px;">{{ course.title }}</p>
+    <div style="display:flex;justify-content:space-between;">
+      <span style="color:var(--g500);">Amount</span>
+      <span style="font-size:22px;font-weight:800;">₹{{ course.price }}</span>
+    </div>
+  </div>
+  <button id="payBtn" class="btn btn-primary btn-block btn-lg">💳 Pay Now</button>
+  <p style="text-align:center;color:var(--g500);font-size:12px;margin-top:12px;">🔒 Secure payment</p>
+</div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('payBtn').onclick = function () {
+  new Razorpay({
+    "key": "{{ razorpay_key }}",
+    "amount": "{{ order.amount }}",
+    "currency": "INR",
+    "name": "EduPath",
+    "description": "{{ course.title }}",
+    "order_id": "{{ order.id }}",
+    "handler": function (response) {
+      var form = document.createElement("form");
+      form.method = "POST"; form.action = "{% url 'payment_success' %}";
+      var csrf = document.createElement("input"); csrf.type = "hidden";
+      csrf.name = "csrfmiddlewaretoken"; csrf.value = "{{ csrf_token }}"; form.appendChild(csrf);
+      for (var k in response) {
+        var i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = response[k]; form.appendChild(i);
+      }
+      document.body.appendChild(form); form.submit();
+    }
+  }).open();
+};
+</script>
+{% endblock %}

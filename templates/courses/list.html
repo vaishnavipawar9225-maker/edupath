@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin-bottom:8px;">📚 All Courses</h2>
+<p style="color:var(--g500); margin-bottom:24px;">Filter by class to find the right course.</p>
+
+<!-- Filter Buttons -->
+<div style="display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap;">
+  <a href="{% url 'course_list' %}" class="btn btn-sm {% if not request.GET.grade %}btn-primary{% else %}btn-outline{% endif %}">
+    All
+  </a>
+  
+  <a href="?grade=5" class="btn btn-sm {% if request.GET.grade == '5' %}btn-primary{% else %}btn-outline{% endif %}">Class 5</a>
+  <a href="?grade=6" class="btn btn-sm {% if request.GET.grade == '6' %}btn-primary{% else %}btn-outline{% endif %}">Class 6</a>
+  <a href="?grade=7" class="btn btn-sm {% if request.GET.grade == '7' %}btn-primary{% else %}btn-outline{% endif %}">Class 7</a>
+  <a href="?grade=8" class="btn btn-sm {% if request.GET.grade == '8' %}btn-primary{% else %}btn-outline{% endif %}">Class 8</a>
+  <a href="?grade=9" class="btn btn-sm {% if request.GET.grade == '9' %}btn-primary{% else %}btn-outline{% endif %}">Class 9</a>
+  <a href="?grade=10" class="btn btn-sm {% if request.GET.grade == '10' %}btn-primary{% else %}btn-outline{% endif %}">Class 10</a>
+</div>
+
+<div class="grid-3">
+  {% for course in courses %}
+    <div class="card card-course card-hover" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+      
+      <!-- Top Visual Banner -->
+      {% if course.thumbnail %}
+        <img src="{{ course.thumbnail.url }}" style="width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid var(--g100);">
+      {% else %}
+        <div class="course-cover" style="background: {% cycle 'linear-gradient(135deg, #EDE9FE, #F5F3FF)' 'linear-gradient(135deg, #E0F2FE, #F0F9FF)' 'linear-gradient(135deg, #FCE7F3, #FDF2F8)' %};">
+          <i class="bi {{ course.subject.icon|default:'bi-journal-bookmark-fill' }}"></i>
+        </div>
+      {% endif %}
+      
+      <!-- Card Body -->
+      <div style="padding: 24px; flex: 1; display: flex; flex-direction: column;">
+        
+        <!-- Two separate badges -->
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <span class="badge badge-outline">Class {{ course.subject.grade }}</span>
+          <span class="badge badge-outline">{{ course.subject.name }}</span>
+        </div>
+        
+        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 8px; line-height: 1.3;">{{ course.title }}</h4>
+        <p style="color: var(--g500); font-size: 14px; line-height: 1.5; margin-bottom: 24px; flex: 1;">{{ course.description|truncatewords:15 }}</p>
+        
+        <!-- Price and Button side-by-side -->
+        <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--g100); padding-top: 16px; margin-top: auto;">
+          <div style="font-size: 22px; font-weight: 800; color: var(--g900);">
+            {% if course.is_free %}FREE{% else %}₹{{ course.price }}{% endif %}
+          </div>
+          <a href="{% url 'course_detail' course.pk %}" class="btn btn-primary btn-sm" style="padding: 8px 16px;">
+            View Course
+          </a>
+        </div>
+
+      </div>
+    </div>
+  {% empty %}
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+      <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
+      <h4 style="margin-bottom: 8px;">No courses found</h4>
+      <p style="color: var(--g500);">Try selecting a different class filter.</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

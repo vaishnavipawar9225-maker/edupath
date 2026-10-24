@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  /* Force Light Mode regardless of browser/OS settings */
+  :root {
+    color-scheme: light !important;
+  }
+  
+  body {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
+
+  /* Make the top header match your EduPath purple theme */
+  #header {
+    background: #5B21B6 !important;
+    color: #ffffff !important;
+  }
+  #branding h1, #branding h1 a:link, #branding h1 a:visited {
+    color: #ffffff !important;
+  }
+
+  /* Make section headers purple */
+  .module h2, .module caption, .inline-group h2 {
+    background: #7C3AED !important;
+    color: #ffffff !important;
+  }
+
+  /* Fix the black input boxes */
+  input, textarea, select, .vTextField {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* Fix the dark sidebar/table backgrounds */
+  .module {
+    background: #ffffff !important;
+  }
+  tr.row1 { background: #f8fafc !important; }
+  tr.row2 { background: #ffffff !important; }
+</style>
+{% endblock %}

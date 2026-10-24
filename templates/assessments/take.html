@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.title }}{% endblock %}
+{% block content %}
+
+<!-- ========== TIMER BAR ========== -->
+<div class="quiz-timer-bar" id="timerBar">
+  <div>
+    <strong>{{ quiz.title }}</strong>
+    <span style="color:var(--g500);font-size:13px;margin-left:12px;">
+      {{ quiz.questions.count }} questions · {{ quiz.total_marks }} marks
+    </span>
+  </div>
+  <div class="timer-display" id="timer">
+    <i class="bi bi-clock"></i>
+    <span id="timerText">{{ quiz.duration_minutes }}:00</span>
+  </div>
+</div>
+
+<form method="post" action="{% url 'submit_quiz' attempt.id %}" id="quizForm">
+  {% csrf_token %}
+  {% for q in quiz.questions.all %}
+    <div class="card quiz-question" style="margin-bottom:16px;">
+      <h4 style="margin-bottom:16px;">
+        Q{{ forloop.counter }}. {{ q.text }}
+        <span class="badge">{{ q.marks }} mark{{ q.marks|pluralize }}</span>
+      </h4>
+      {% for c in q.choices.all %}
+        <label class="quiz-choice">
+          <input type="radio" name="q_{{ q.id }}" value="{{ c.id }}">
+          <span>{{ c.text }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+  <!-- ========== PROGRESS BAR ========== -->
+  <div class="quiz-progress">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+      <span style="font-size:13px;color:var(--g500);">Progress</span>
+      <span style="font-size:13px;font-weight:600;" id="progressText">0 / {{ quiz.questions.count }} answered</span>
+    </div>
+    <div style="height:8px;background:var(--g100);border-radius:4px;overflow:hidden;">
+      <div id="progressFill" style="height:100%;width:0%;background:var(--p700);transition:width .3s;"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-top:24px;">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline" onclick="return confirmLeave()">Cancel</a>
+    <button type="button" class="btn btn-primary btn-lg" style="flex:1;" onclick="confirmSubmit()">
+      ✅ Submit Quiz
+    </button>
+  </div>
+</form>
+
+<!-- ========== STYLES ========== -->
+<style>
+  .quiz-timer-bar {
+    position: sticky; top: 64px; z-index: 50;
+    background: #fff; padding: 16px 24px;
+    border-radius: 14px; margin-bottom: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: var(--shadow-md); border: 1px solid var(--g100);
+  }
+  .timer-display {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 22px; font-weight: 800;
+    color: var(--p700); font-variant-numeric: tabular-nums;
+  }
+  .timer-display.warning { color: var(--amber); }
+  .timer-display.danger  { color: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .5; } }
+
+  .quiz-question { padding: 24px; }
+  .quiz-choice {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; margin-bottom: 8px;
+    border: 1.5px solid var(--g100); border-radius: 10px;
+    cursor: pointer; transition: .15s;
+  }
+  .quiz-choice:hover { border-color: var(--p700); background: #FAF5FF; }
+  .quiz-choice input { accent-color: var(--p700); width: 18px; height: 18px; }
+  .quiz-choice.selected { border-color: var(--p700); background: #F3E8FF; }
+
+  .quiz-progress { margin-top: 24px; padding: 20px; background: #fff; border-radius: 14px; border: 1px solid var(--g100); }
+</style>
+
+<!-- ========== JAVASCRIPT ========== -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// ========== CONFIG ==========
+const TOTAL_QUESTIONS = {{ quiz.questions.count }};
+const TOTAL_SECONDS = {{ quiz.duration_minutes }} * 60;
+let timeLeft = TOTAL_SECONDS;
+let submitted = false;
+let answered = 0;
+
+// ========== TIMER ==========
+const timerEl = document.getElementById('timer');
+const timerText = document.getElementById('timerText');
+
+const timerInterval = setInterval(() => {
+  if (submitted) { clearInterval(timerInterval); return; }
+  timeLeft--;
+
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  timerText.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+
+  // Color changes at thresholds
+  timerEl.classList.remove('warning', 'danger');
+  if (timeLeft <= 60)      timerEl.classList.add('danger');
+  else if (timeLeft <= 180) timerEl.classList.add('warning');
+
+  // Warnings at 5 min and 1 min
+  if (timeLeft === 300) {
+    Swal.fire({
+      icon: 'warning',
+      title: '5 minutes remaining',
+      text: 'Review your answers before submitting!',
+      timer: 4000, showConfirmButton: false,
+      toast: true, position: 'top-end',
+    });
+  }
+  if (timeLeft === 60) {
+    Swal.fire({
+      icon: 'error',
+      title: '1 minute left!',
+      text: 'Quiz will auto-submit when time runs out.',
+      timer: 4000, showConfirmButton: false,
+      toast: true, position: 'top-end',
+    });
+  }
+
+  // Auto-submit at 0
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    Swal.fire({
+      icon: 'info',
+      title: "⏰ Time's up!",
+      text: 'Your quiz is being submitted automatically...',
+      timer: 2000, showConfirmButton: false,
+      allowOutsideClick: false,
+    }).then(() => forceSubmit());
+  }
+}, 1000);
+
+// ========== PROGRESS TRACKING ==========
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+
+function updateProgress() {
+  const checked = document.querySelectorAll('input[type="radio"]:checked');
+  answered = new Set([...checked].map(r => r.name)).size;
+  const pct = TOTAL_QUESTIONS ? (answered / TOTAL_QUESTIONS) * 100 : 0;
+  progressFill.style.width = pct + '%';
+  progressText.textContent = `${answered} / ${TOTAL_QUESTIONS} answered`;
+}
+
+document.querySelectorAll('input[type="radio"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    // Remove highlight from siblings
+    document.querySelectorAll(`input[name="${e.target.name}"]`).forEach(r => {
+      r.closest('.quiz-choice').classList.remove('selected');
+    });
+    e.target.closest('.quiz-choice').classList.add('selected');
+    updateProgress();
+  });
+});
+
+// ========== SUBMIT CONFIRMATION ==========
+function confirmSubmit() {
+  const unanswered = TOTAL_QUESTIONS - answered;
+
+  if (unanswered === 0) {
+    // All answered → simple confirmation
+    Swal.fire({
+      title: 'Submit Quiz?',
+      text: 'You have answered all questions. Ready to submit?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '✅ Yes, Submit',
+      cancelButtonText: 'Review',
+      confirmButtonColor: '#5B21B6',
+    }).then(result => {
+      if (result.isConfirmed) forceSubmit();
+    });
+  } else {
+    // Unanswered → warning
+    Swal.fire({
+      title: `⚠️ ${unanswered} unanswered question${unanswered > 1 ? 's' : ''}`,
+      html: `You have <strong>${answered}/${TOTAL_QUESTIONS}</strong> answered.<br>Unanswered questions will be marked as wrong.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Submit Anyway',
+      cancelButtonText: 'Continue Quiz',
+      confirmButtonColor: '#DC2626',
+      cancelButtonColor: '#64748B',
+    }).then(result => {
+      if (result.isConfirmed) forceSubmit();
+    });
+  }
+}
+
+function forceSubmit() {
+  submitted = true;
+  clearInterval(timerInterval);
+  Swal.fire({
+    icon: 'success',
+    title: 'Submitting...',
+    text: 'Calculating your score',
+    timer: 1200, showConfirmButton: false,
+    allowOutsideClick: false,
+  });
+  setTimeout(() => document.getElementById('quizForm').submit(), 800);
+}
+
+// ========== WARNING ON LEAVING ==========
+function confirmLeave() {
+  return confirm('Leave quiz? Your progress will be lost.');
+}
+
+// Browser tab close / refresh warning
+window.addEventListener('beforeunload', (e) => {
+  if (!submitted && answered > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+updateProgress();
+</script>
+{% endblock %}
