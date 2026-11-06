@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-card" style="max-width: 600px; margin-top: 40px;">
+    <h2 style="margin-bottom: 8px;">📅 Schedule a Meeting</h2>
+    <p style="color: var(--g500); font-size: 14px; margin-bottom: 24px;">
+        Schedule a live class or a Parent-Teacher Meeting. The system will automatically notify all enrolled students and their parents.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="form-group">
+            <label>{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <small style="color: var(--red); font-size: 12px;">{{ field.errors.0 }}</small>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Schedule & Notify</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

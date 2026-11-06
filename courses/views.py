@@ -28,32 +28,38 @@ def course_list(request):
 
 
 def course_detail(request, pk):
-    """Show course information and enrollment status."""
-    course = get_object_or_404(
-        Course.objects.select_related("subject", "teacher").prefetch_related(
-            "chapters__lectures"
-        ),
-        pk=pk,
-    )
-
+    course = get_object_or_404(Course, pk=pk)
+    chapters = course.chapters.prefetch_related('lectures', 'quizzes').all() # Fetch quizzes!
     enrolled = False
-
     if request.user.is_authenticated and request.user.role == "student":
-        try:
-            student = request.user.student_profile
-            enrolled = Enrollment.objects.filter(
-                student=student,
-                course=course,
-                is_active=True,
-            ).exists()
-        except AttributeError:
-            enrolled = False
+        student = request.user.student_profile
 
-    return render(
-        request,
-        "courses/detail.html",
-        {"course": course, "enrolled": enrolled},
-    )
+        enrolled = Enrollment.objects.filter(student=student, course=course).exists()
+        
+        # 🔥 NEW LOGIC: Check if all lectures in a chapter are completed
+        if enrolled:
+            for ch in chapters:
+                total_lectures = ch.lectures.count()
+                if total_lectures == 0:
+                    ch.is_completed = False
+                else:
+                    completed_count = LectureProgress.objects.filter(
+                        student=student, 
+                        lecture__chapter=ch, 
+                        completed=True
+                    ).count()
+                    # If completed count equals total, unlock the quiz
+                    ch.is_completed = (completed_count == total_lectures)
+        else:
+            for ch in chapters:
+                ch.is_completed = False
+                
+    return render(request, "courses/detail.html", {
+        "course": course, 
+        "chapters": chapters,
+        "enrolled": enrolled
+    })
+
 
 
 @login_required

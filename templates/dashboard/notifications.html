@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .notif-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    .notif-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+    .notif-card {
+        display: flex;
+        gap: 16px;
+        padding: 24px;
+        border-radius: 12px;
+        background: #fff;
+        margin-bottom: 16px;
+        border: 1px solid var(--g100);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .notif-card.unread {
+        border-left: 5px solid var(--p700);
+        background: #FAF5FF;
+        box-shadow: 0 4px 12px rgba(91,33,182,0.05);
+    }
+    .notif-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .notif-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    .icon-meeting { background: #EDE9FE; color: #5B21B6; }
+    .icon-alert { background: #FEF3C7; color: #D97706; }
+    .notif-content { flex: 1; }
+    .notif-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--g900);
+        margin-bottom: 4px;
+    }
+    .notif-date {
+        font-size: 13px;
+        color: var(--g500);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .notif-message {
+        font-size: 14.5px;
+        color: var(--g700);
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+    .btn-join {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--p700);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+    .btn-join:hover {
+        background: var(--p900);
+        box-shadow: 0 4px 12px rgba(91,33,182,0.3);
+    }
+</style>
+
+<div class="notif-container">
+    
+    <!-- Header -->
+    <div class="notif-header">
+        <div>
+            <h1 style="font-size: 28px; font-weight: 800; color: var(--g900); margin: 0;">🔔 Notifications</h1>
+            <p style="color: var(--g500); font-size: 14px; margin-top: 4px;">Stay updated with your classes and meetings.</p>
+        </div>
+    </div>
+
+    <!-- Notification List -->
+    {% for n in notifications %}
+        <div class="notif-card {% if not n.is_read %}unread{% endif %}">
+            
+            <!-- Dynamic Icon -->
+            {% if "Meeting" in n.title %}
+                <div class="notif-icon icon-meeting"><i class="bi bi-calendar-event"></i></div>
+            {% else %}
+                <div class="notif-icon icon-alert"><i class="bi bi-bell-fill"></i></div>
+            {% endif %}
+
+            <!-- Content -->
+            <div class="notif-content">
+                <h5 class="notif-title">{{ n.title }}</h5>
+                <div class="notif-date">
+                    <i class="bi bi-clock"></i> {{ n.created_at|date:"d M Y, h:i A" }}
+                </div>
+                <p class="notif-message">{{ n.message }}</p>
+                
+                <!-- Action Button -->
+                {% if n.link %}
+                    <a href="{{ n.link }}" class="btn-join" target="_blank">
+                        <i class="bi bi-camera-video-fill"></i> Join Meeting Now
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <!-- Empty State -->
+        <div class="card" style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">📭</div>
+            <h4 style="margin-bottom: 8px; color: var(--g900);">No notifications yet</h4>
+            <p style="color: var(--g500);">When your teacher schedules a meeting or sends an alert, it will appear here.</p>
+        </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

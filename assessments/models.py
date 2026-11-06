@@ -1,9 +1,10 @@
 from django.db import models
 from accounts.models import StudentProfile
-from courses.models import Course
+from courses.models import Course, Chapter 
 
 class Quiz(models.Model):                            # TABLE 11
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="quizzes")
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name="quizzes", null=True, blank=True) 
     title = models.CharField(max_length=200)
     total_marks = models.PositiveIntegerField(default=0)
     duration_minutes = models.PositiveIntegerField(default=15)

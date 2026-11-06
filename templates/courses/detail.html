@@ -1,37 +1,92 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card" style="padding:40px;margin-bottom:24px;background:linear-gradient(135deg,#EDE9FE,#F5F3FF);">
-  <span class="badge">Class {{ course.subject.grade }} · {{ course.subject.name }}</span>
-  <h2 style="margin:12px 0;font-size:32px;">{{ course.title }}</h2>
-  <p style="color:var(--g700);max-width:720px;margin-bottom:24px;">{{ course.description }}</p>
-  <div style="display:flex;gap:16px;align-items:center;">
-    <span style="font-size:28px;font-weight:800;">{% if course.is_free %}FREE{% else %}₹{{ course.price }}{% endif %}</span>
+
+<!-- ========== COURSE HEADER ========== -->
+<div class="card" style="padding:40px; margin-bottom:40px; background:linear-gradient(135deg,#EDE9FE,#F5F3FF); border-radius: 16px; border: 1px solid var(--g100); box-shadow: var(--shadow-sm);">
+  <span class="badge" style="background: #fff; color: var(--p700); font-weight: 700; padding: 6px 14px;">Class {{ course.subject.grade }} · {{ course.subject.name }}</span>
+  <h2 style="margin:16px 0; font-size:36px; font-weight: 800; color: var(--g900);">{{ course.title }}</h2>
+  <p style="color:var(--g700); max-width:720px; margin-bottom:32px; font-size: 16px; line-height: 1.6;">{{ course.description }}</p>
+  
+  <div style="display:flex; gap:20px; align-items:center; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 24px;">
+    <span style="font-size:32px; font-weight:800; color: var(--g900);">
+        {% if course.is_free %}FREE{% else %}₹{{ course.price }}{% endif %}
+    </span>
+    
     {% if user.is_authenticated %}
       {% if user.role == 'student' %}
         {% if enrolled %}
-          <span class="badge badge-green">✅ Enrolled</span>
+          <span class="badge badge-green" style="font-size: 15px; padding: 8px 16px;">✅ Enrolled</span>
         {% else %}
-          <a href="{% url 'checkout' course.pk %}" class="btn btn-success btn-lg">Enroll Now</a>
+          <a href="{% url 'checkout' course.pk %}" class="btn btn-success btn-lg" style="padding: 12px 32px; font-weight: 700; border-radius: 8px;">Enroll Now</a>
         {% endif %}
       {% endif %}
     {% else %}
-      <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Login to Enroll</a>
+      <a href="{% url 'login' %}" class="btn btn-primary btn-lg" style="padding: 12px 32px; font-weight: 700; border-radius: 8px;">Login to Enroll</a>
     {% endif %}
   </div>
 </div>
 
-<h3 style="margin-bottom:16px;">📖 Course Content</h3>
-{% for ch in course.chapters.all %}
-  <div class="card" style="margin-bottom:12px;">
-    <h4>{{ ch.title }}</h4>
-    {% for lec in ch.lectures.all %}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--g100);">
-        <span><i class="bi bi-play-circle" style="color:var(--p700);"></i> {{ lec.title }}</span>
-        <a href="{% url 'lecture_view' lec.pk %}" class="btn btn-outline btn-sm">Open</a>
-      </div>
+<!-- ========== PROFESSIONAL COURSE CONTENT ========== -->
+<h3 style="margin-bottom: 24px; font-size: 24px; font-weight: 800; color: var(--g900);">📖 Course Content</h3>
+
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    {% for ch in chapters %}
+    
+    <!-- Chapter Card -->
+    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--g100); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        
+        <!-- Chapter Header -->
+        <div style="background: #F8FAFC; padding: 16px 24px; border-bottom: 1px solid var(--g100); display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--g900);">
+                {{ ch.title }}
+            </h4>
+            <span class="badge" style="background: var(--p100); color: var(--p700);">
+                {{ ch.lectures.count }} Lectures
+            </span>
+        </div>
+
+        <!-- Lectures List -->
+        <div style="padding: 8px 0;">
+            {% for lec in ch.lectures.all %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #F1F5F9; transition: 0.2s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="bi bi-play-circle-fill" style="color: var(--p700); font-size: 20px;"></i>
+                    <span style="font-size: 14.5px; font-weight: 500; color: var(--g700);">{{ lec.title }}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span style="font-size: 13px; color: var(--g500);"><i class="bi bi-clock"></i> {{ lec.duration_minutes }} min</span>
+                    <a href="{% url 'lecture_view' lec.pk %}" class="btn btn-sm btn-outline-primary" style="border-radius: 6px; font-weight: 600;">Open</a>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding: 16px 24px; color: var(--g500); font-size: 14px;">No lectures added yet.</div>
+            {% endfor %}
+        </div>
+
+        <!-- Chapter Quiz / Test (If exists) -->
+        {% for quiz in ch.quizzes.all %}
+        <div style="background: #FEF3C7; padding: 20px 24px; border-top: 1px dashed #FDE68A; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: #F59E0B; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h5 style="margin: 0; font-size: 15px; font-weight: 700; color: #92400E;">Chapter Test: {{ quiz.title }}</h5>
+                    <p style="margin: 0; font-size: 13px; color: #B45309;">{{ quiz.questions.count }} Questions · {{ quiz.duration_minutes }} Mins · {{ quiz.total_marks }} Marks</p>
+                </div>
+            </div>
+            <a href="{% url 'start_quiz' quiz.pk %}" class="btn" style="background: #F59E0B; color: white; font-weight: 700; padding: 10px 24px; border-radius: 8px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
+                Start Test <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        {% endfor %}
+
+    </div>
+    {% empty %}
+    <div class="card" style="text-align: center; padding: 40px;">
+        <p style="color: var(--g500); margin: 0;">No chapters available for this course yet.</p>
+    </div>
     {% endfor %}
-  </div>
-{% empty %}
-  <p style="color:var(--g500);">No chapters yet.</p>
-{% endfor %}
+</div>
+
 {% endblock %}

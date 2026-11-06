@@ -13,7 +13,14 @@ from .forms import LinkChildForm
 
 from django.shortcuts import get_object_or_404
 from liveclasses.models import ParentMeeting
-
+from .models import Notification
+from accounts.models import StudentProfile
+from .forms import MeetingForm
+from liveclasses.models import LiveClass
+from .models import Notification
+from courses.models import Enrollment
+from django.urls import reverse
+from liveclasses.models import LiveClass, ParentMeeting
 
 def home(request):
     featured = Course.objects.all()[:6]
@@ -27,7 +34,6 @@ def dashboard(request):
     if role == "parent": return parent_dashboard(request)
     return admin_dashboard(request) 
 
-def student_dashboard(request):
     student = request.user.student_profile
     enrollments = Enrollment.objects.filter(student=student).select_related("course")
     attempts = QuizAttempt.objects.filter(student=student).order_by("-started_at")[:5]
@@ -38,7 +44,24 @@ def student_dashboard(request):
     return render(request, "dashboard/student.html", {
         "enrollments": enrollments, "attempts": attempts, "attendance_percent": pct,
     })
-
+def student_dashboard(request):
+    student = request.user.student_profile
+    # Fetch ONLY the courses this student is enrolled in
+    enrollments = Enrollment.objects.filter(student=student).select_related("course")
+    
+    attempts = QuizAttempt.objects.filter(student=student).order_by("-started_at")[:5]
+    attendance = Attendance.objects.filter(student=student)
+    total = attendance.count()
+    present = attendance.filter(status="present").count()
+    pct = round((present / total * 100) if total else 0, 1)
+    
+    return render(request, "dashboard/student.html", {
+        "enrollments": enrollments, 
+        "attempts": attempts, 
+        "attendance_percent": pct,
+    })
+    
+    
 def teacher_dashboard(request):
     from liveclasses.models import ParentMeeting
     courses = Course.objects.filter(teacher=request.user)
@@ -90,11 +113,27 @@ def parent_meetings(request):
     if request.user.role != 'parent':
         return redirect('dashboard')
     
-    # Fetch actual meetings from the database instead of mock data
+    # 1. Fetch PTM requests
     meetings = ParentMeeting.objects.filter(parent=request.user).order_by('-created_at')
     
-    return render(request, "dashboard/meetings.html", {"meetings": meetings})
+    # 2. Fetch Live Classes scheduled by teachers for their children
+    # Get the children linked to this parent
+    children = request.user.children.all()
+    child_courses = []
+    for child in children:
+        # Get all courses the child is enrolled in
+        enrollments = Enrollment.objects.filter(student=child, is_active=True)
+        for e in enrollments:
+            child_courses.append(e.course.id)
 
+    # Fetch upcoming live classes for those courses
+    live_classes = LiveClass.objects.filter(course_id__in=child_courses).order_by('scheduled_at')
+    
+    return render(request, "dashboard/meetings.html", {
+        "meetings": meetings,
+        "live_classes": live_classes
+    })
+    
 @login_required
 def request_meeting(request):
     if request.user.role != 'parent':
@@ -173,3 +212,79 @@ def update_meeting_status(request, meeting_id, status):
         messages.success(request, f"Meeting successfully {status}!")
         
     return redirect('dashboard')
+
+@login_required
+def notification_list(request):
+    notifications = Notification.objects.filter(recipient=request.user)
+    # Mark all as read
+    notifications.update(is_read=True)
+    return render(request, "dashboard/notifications.html", {"notifications": notifications})
+
+@login_required
+def send_teacher_notification(request, course_id):
+    if request.user.role != 'teacher':
+        return redirect('dashboard')
+        
+    course = get_object_or_404(Course, id=course_id, teacher=request.user)
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        message = request.POST.get('message')
+        
+        # Send to all enrolled students
+        enrollments = course.enrollments.filter(is_active=True)
+        for e in enrollments:
+            Notification.objects.create(recipient=e.student.user, title=title, message=message)
+            # Optional: Send email here
+            
+        messages.success(request, f"Notification sent to {enrollments.count()} students!")
+        return redirect('dashboard')
+        
+    return render(request, "dashboard/send_notification.html", {"course": course})
+
+@login_required
+def create_meeting(request):
+    if request.user.role != 'teacher':
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = MeetingForm(request.POST, teacher=request.user)
+        if form.is_valid():
+            meeting = form.save(commit=False)
+            meeting.teacher = request.user
+            meeting.save()
+            
+            # 🔔 Generate the URL to join this specific meeting
+            # This uses the 'join_class' URL from your liveclasses app
+            meeting_url = reverse('join_class', args=[meeting.id])
+
+            # 🔔 Send Notifications to Students and Parents
+            enrollments = Enrollment.objects.filter(course=meeting.course, is_active=True)
+            notif_count = 0
+            
+            for e in enrollments:
+                # 1. Notify Student
+                Notification.objects.create(
+                    recipient=e.student.user,
+                    title=f"📅 New Meeting: {meeting.title}",
+                    message=f"A new meeting for {meeting.course.title} has been scheduled on {meeting.scheduled_at.strftime('%d %b %Y, %I:%M %p')}. Please join on time.",
+                    link=meeting_url
+                )
+                notif_count += 1
+                
+                # 2. Notify Parent (if linked)
+                if e.student.parent:
+                    Notification.objects.create(
+                        recipient=e.student.parent,
+                        title=f"📅 Meeting Scheduled for {e.student.user.username}",
+                        message=f"Teacher {request.user.username} scheduled a meeting for {meeting.course.title} on {meeting.scheduled_at.strftime('%d %b %Y, %I:%M %p')}.",
+                        link=meeting_url
+                    )
+                    notif_count += 1
+
+            messages.success(request, f"✅ Meeting scheduled! Sent {notif_count} notifications.")
+            return redirect('dashboard')
+    else:
+        form = MeetingForm(teacher=request.user)
+
+    return render(request, 'dashboard/create_meeting.html', {'form': form})

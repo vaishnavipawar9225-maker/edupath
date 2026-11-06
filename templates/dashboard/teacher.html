@@ -1,31 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-  <div>
-    <h2>👨‍🏫 Teacher Dashboard</h2>
-    <p style="color:var(--g500);font-size:14px;">Welcome back, {{ user.get_full_name|default:user.username }}.</p>
-  </div>
-  <a href="{% url 'teacher_create_quiz' %}" class="btn btn-primary">+ Create Quiz</a>
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+    <div>
+        <h2>👨‍🏫 Teacher Dashboard</h2>
+        <p style="color: var(--g500);">Manage your courses and students.</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <a href="{% url 'create_meeting' %}" class="btn btn-outline">📅 Schedule Meeting</a>
+        <a href="{% url 'teacher_create_quiz' %}" class="btn btn-primary">+ Create Quiz</a>
+    </div>
 </div>
 
-<h4 style="margin-bottom:16px;">📚 My Courses</h4>
+<h4 style="margin-bottom:16px;">My Courses</h4>
 <div class="grid-3" style="margin-bottom:40px;">
   {% for c in courses %}
-    <div class="card card-hover">
-      <h4>{{ c.title }}</h4>
-      <p style="color:var(--g500);font-size:13px;margin-bottom:14px;">
-        {{ c.enrollments.count }} students · {{ c.quizzes.count }} quizzes
-      </p>
-      <a href="{% url 'mark_attendance' c.pk %}" class="btn btn-primary btn-sm btn-block" style="margin-bottom:8px;">📋 Mark Attendance</a>
-      <a href="{% url 'course_detail' c.pk %}" class="btn btn-outline btn-sm btn-block">View Course</a>
-    </div>
+    <!-- Inside the My Courses loop -->
+<div class="card card-hover">
+  <h4>{{ c.title }}</h4>
+  <p style="color:var(--g500);font-size:13px;margin-bottom:14px;">{{ c.enrollments.count }} students</p>
+  
+  <a href="{% url 'mark_attendance' c.pk %}" class="btn btn-primary btn-sm btn-block mb-2">Mark Attendance</a>
+  <!-- NEW BUTTON -->
+  <a href="{% url 'send_teacher_notification' c.pk %}" class="btn btn-warning btn-sm btn-block mb-2">Send Notification</a>
+  
+  <a href="{% url 'course_detail' c.pk %}" class="btn btn-outline btn-sm btn-block">View Course</a>
+</div>
   {% empty %}
     <p style="color:var(--g500);">No courses assigned yet.</p>
   {% endfor %}
 </div>
 
 <!-- ========== MEETING REQUESTS ========== -->
-<h4 style="margin: 40px 0 20px; font-size: 22px;">📅 Parent Meeting Requests</h4>
+<h4 style="margin: 40px 0 20px; font-size: 22px;">Parent Meeting Requests</h4>
 
 <div class="grid-2">
   {% for meeting in meetings %}
@@ -73,7 +79,7 @@
 </div>
 
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-  <h4>📝 My Quizzes</h4>
+  <h4>My Quizzes</h4>
   <a href="{% url 'teacher_quiz_list' %}" style="color:var(--p700);font-size:14px;text-decoration:none;font-weight:600;">View All →</a>
 </div>
 <div class="grid-3">

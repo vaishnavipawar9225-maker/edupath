@@ -72,14 +72,27 @@ def start_quiz(request, pk):
         messages.error(request, "Only students can take quizzes.")
         return redirect("dashboard")
 
-    quiz = get_object_or_404(
-        Quiz.objects.select_related("course"),
-        pk=pk,
-        is_published=True,
-        course__enrollments__student=student,
-        course__enrollments__is_active=True,
-    )
+    # 1. First check if the quiz exists at all
+    quiz = Quiz.objects.filter(pk=pk).first()
+    if not quiz:
+        messages.error(request, f"Quiz with ID {pk} does not exist.")
+        return redirect("quiz_list")
 
+    # 2. Check if it's published
+    if not quiz.is_published:
+        messages.error(request, f"Quiz '{quiz.title}' is not published yet.")
+        return redirect("quiz_list")
+
+    # 3. Check if the student is enrolled
+    is_enrolled = Enrollment.objects.filter(
+        student=student, course=quiz.course, is_active=True
+    ).exists()
+    if not is_enrolled:
+        messages.error(
+            request,
+            f"You are not enrolled in '{quiz.course.title}'. Please enroll first."
+        )
+        return redirect("course_detail", pk=quiz.course.pk)
     # Reuse an unfinished attempt if the student refreshes or returns.
     attempt = QuizAttempt.objects.filter(
         student=student,

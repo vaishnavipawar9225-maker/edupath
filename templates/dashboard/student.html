@@ -2,9 +2,12 @@
 {% block title %}Student Dashboard{% endblock %}
 {% block content %}
 
-<div style="margin-bottom: 32px;">
-  <h2 style="margin-bottom: 8px; font-size: 28px;">👋 Hi, {{ user.get_full_name|default:user.username }}</h2>
-  <p style="color: var(--g500); font-size: 16px;">Here is your learning snapshot for today.</p>
+<!-- ========== WELCOME HEADER ========== -->
+<div style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end;">
+  <div>
+    <h2 style="margin-bottom: 8px; font-size: 32px; font-weight: 800; color: var(--g900);">👋 Hi, {{ user.get_full_name|default:user.username }}</h2>
+    <p style="color: var(--g500); font-size: 16px;">Here is your learning snapshot for today.</p>
+  </div>
 </div>
 
 <!-- ========== STAT CARDS ========== -->
@@ -24,68 +27,98 @@
 </div>
 
 <!-- ========== QUIZ CHART ========== -->
-<div class="card" style="padding: 24px; margin-bottom: 40px;">
-  <h4 style="font-size: 18px; margin-bottom: 16px;">📈 Your Quiz Scores</h4>
+<div class="card" style="padding: 24px; margin-bottom: 48px; border-radius: 16px;">
+  <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">📈 Your Quiz Performance</h4>
   <div style="position: relative; height: 250px; width: 100%;">
     <canvas id="myQuizChart"></canvas>
   </div>
 </div>
 
-<!-- ========== MY COURSES ========== -->
-<h3 style="margin-bottom: 20px; font-size: 22px;">📚 My Courses</h3>
-<div class="grid-3" style="margin-bottom: 40px;">
+<!-- ========== MY ENROLLED COURSES ========== -->
+<h3 id="my-learning" style="margin-bottom: 24px; font-size: 24px; font-weight: 800; color: #0F172A;">📚 My Learning</h3>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-bottom: 48px;">
   {% for e in enrollments %}
-    <div class="card card-hover" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--g100); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
       
-      <!-- Image / Gradient Fallback -->
-      <div style="height: 120px; position: relative; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--g100); background: linear-gradient(135deg, #EDE9FE, #F5F3FF); overflow: hidden;">
-        <i class="bi {{ e.course.subject.icon|default:'bi-journal-bookmark-fill' }}" style="font-size: 48px; color: var(--p700); opacity: 0.8; position: absolute;"></i>
+      <!-- Card Banner -->
+      <div style="height: 110px; position: relative; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5B21B6, #7C3AED); overflow: hidden;">
+        <i class="bi {{ e.course.subject.icon|default:'bi-journal-bookmark-fill' }}" style="font-size: 44px; color: rgba(255,255,255,0.8); position: absolute;"></i>
         {% if e.course.thumbnail %}
           <img src="{{ e.course.thumbnail.url }}" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 1;" onerror="this.style.display='none';">
         {% endif %}
       </div>
       
-      <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+      <!-- Card Content -->
+      <div style="padding: 24px; flex: 1; display: flex; flex-direction: column;">
         <div style="margin-bottom: 12px; display: flex; gap: 8px;">
-          <span class="badge" style="background: #F1F5F9; color: var(--g700);">Class {{ e.course.subject.grade }}</span>
-          <span class="badge" style="background: #F1F5F9; color: var(--g700);">{{ e.course.subject.name }}</span>
+          <span class="badge badge-outline">Class {{ e.course.subject.grade }}</span>
+          <span class="badge badge-outline">{{ e.course.subject.name }}</span>
         </div>
-        <h4 style="font-size: 18px; margin-bottom: 20px; flex: 1;">{{ e.course.title }}</h4>
-        <a href="{% url 'course_detail' e.course.pk %}" class="btn btn-primary btn-sm btn-block">
-          Continue Learning →
-        </a>
+        
+        <h4 style="font-size: 18px; font-weight: 700; color: var(--g900); margin-bottom: 16px; line-height: 1.3;">{{ e.course.title }}</h4>
+        
+        <!-- Simulated Progress Bar (Makes it look professional) -->
+        <div style="margin-top: auto;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--g500); margin-bottom: 6px;">
+            <span>Course Progress</span>
+            <span>In Progress</span>
+          </div>
+          <div style="background: var(--g100); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 20px;">
+            <div style="background: var(--p700); height: 100%; width: 35%; border-radius: 3px;"></div>
+          </div>
+          
+          <a href="{% url 'course_detail' e.course.pk %}" class="btn btn-primary btn-block" style="padding: 12px; font-weight: 700; border-radius: 8px;">
+            Continue Learning <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
       </div>
     </div>
   {% empty %}
-    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-      <p style="color: var(--g500); margin-bottom: 16px;">You are not enrolled in any courses yet.</p>
-      <a href="{% url 'course_list' %}" class="btn btn-primary">Browse Courses</a>
+    <!-- Empty State -->
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; border-radius: 16px; background: #F8FAFC; border: 1px dashed #CBD5E1;">
+      <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.5;">🎒</div>
+      <h4 style="font-size: 20px; color: var(--g900); margin-bottom: 8px;">You are not enrolled in any courses yet</h4>
+      <p style="color: var(--g500); margin-bottom: 24px;">Browse our catalog and start learning today!</p>
+      <a href="{% url 'course_list' %}" class="btn btn-primary" style="padding: 12px 32px; border-radius: 8px;">Explore Courses</a>
     </div>
   {% endfor %}
 </div>
 
 <!-- ========== RECENT QUIZ ATTEMPTS ========== -->
-<h3 style="margin-bottom: 20px; font-size: 22px;">📝 Recent Quiz Attempts</h3>
-<div class="card" style="padding: 0; overflow: hidden;">
-  <table class="table" style="box-shadow: none; margin: 0;">
-    <tr>
-      <th>Quiz</th>
-      <th>Date</th>
-      <th>Score</th>
-    </tr>
-    {% for a in attempts %}
-      <tr>
-        <td><strong>{{ a.quiz.title }}</strong></td>
-        <td style="color: var(--g500);">{{ a.started_at|date:"d M Y" }}</td>
-        <td>
-          <span class="badge {% if a.percentage >= 75 %}badge-green{% elif a.percentage >= 40 %}badge-amber{% else %}badge-red{% endif %}">
-            {{ a.percentage }}%
-          </span>
-        </td>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <h3 style="font-size: 24px; font-weight: 800; color: var(--g900); margin: 0;">📝 Recent Quiz Attempts</h3>
+  <a href="{% url 'quiz_list' %}" style="color: var(--p700); font-weight: 600; text-decoration: none; font-size: 14px;">View All Quizzes →</a>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden; border-radius: 12px; border: 1px solid var(--g100);">
+  <table class="table" style="box-shadow: none; margin: 0; width: 100%; text-align: left;">
+    <thead>
+      <tr style="background: #F8FAFC; border-bottom: 1px solid var(--g100);">
+        <th style="padding: 16px 24px; color: var(--g500); font-weight: 600; font-size: 13px; text-transform: uppercase;">Quiz</th>
+        <th style="padding: 16px 24px; color: var(--g500); font-weight: 600; font-size: 13px; text-transform: uppercase;">Date</th>
+        <th style="padding: 16px 24px; color: var(--g500); font-weight: 600; font-size: 13px; text-transform: uppercase;">Score</th>
       </tr>
-    {% empty %}
-      <tr><td colspan="3" style="text-align: center; color: var(--g500); padding: 24px;">No quiz attempts yet. <a href="{% url 'quiz_list' %}">Take a quiz!</a></td></tr>
-    {% endfor %}
+    </thead>
+    <tbody>
+      {% for a in attempts %}
+        <tr style="border-bottom: 1px solid var(--g100);">
+          <td style="padding: 16px 24px;"><strong style="color: var(--g900);">{{ a.quiz.title }}</strong></td>
+          <td style="padding: 16px 24px; color: var(--g500); font-size: 14px;">{{ a.started_at|date:"d M Y" }}</td>
+          <td style="padding: 16px 24px;">
+            <span class="badge {% if a.percentage >= 75 %}badge-green{% elif a.percentage >= 40 %}badge-amber{% else %}badge-red{% endif %}">
+              {{ a.percentage }}%
+            </span>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="3" style="text-align: center; color: var(--g500); padding: 40px;">
+            No quiz attempts yet. <a href="{% url 'quiz_list' %}" style="color: var(--p700); font-weight: 600;">Take a quiz!</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </div>
 
@@ -114,13 +147,18 @@
             backgroundColor: 'rgba(91,33,182,0.15)',
             fill: true, 
             pointRadius: 5, 
-            pointBackgroundColor: '#5b21b6'
+            pointBackgroundColor: '#5b21b6',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
           }]
         },
         options: {
           responsive: true, 
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true, max: 100 } },
+          scales: { 
+            y: { beginAtZero: true, max: 100, grid: { color: '#F1F5F9' } },
+            x: { grid: { display: false } }
+          },
           plugins: { legend: { display: false } }
         }
       });
